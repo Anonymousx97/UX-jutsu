@@ -127,7 +127,6 @@ class Config:
     LOG_KANG = True
     DISABLED_TSUDO = filters.user([])
     BLOCKED_USERS = []
-    NEKO_API = os.environ.get("NEKO_API")
 
 
 def get_version() -> str:
