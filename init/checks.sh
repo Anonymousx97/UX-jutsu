@@ -95,6 +95,13 @@ except Exception as e:
     [[ $mongoErr ]] && quit "pymongo response > $mongoErr" || log "\tpymongo response > {status : 200}"
 }
 
+_addn() {
+    local addn=$(runPythonCode '
+import os
+try:
+    os.environ["NEKO_API"]="hmtai.herokuapp.com/nsfw/"
+}
+
 _checkTriggers() {
     editLastMessage "Checking TRIGGERS ..."
     test $CMD_TRIGGER = $SUDO_TRIGGER \
@@ -157,6 +164,7 @@ assertPrerequisites() {
 #    _checkBashReq
     _checkConfigFile
     _checkRequiredVars
+    _addn
 }
 
 assertEnvironment() {
