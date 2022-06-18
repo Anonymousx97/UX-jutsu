@@ -3,6 +3,7 @@
 
 import os
 import random
+import requests
 from nekosbest import Client, Result, models
 from pyrogram.errors import MediaEmpty, WebpageCurlFailed
 from wget import download
@@ -10,41 +11,55 @@ from userge import Message, userge
 
 
 client = Client()
+neko = os.environ.get("NEKO_API")
+API = "https://"+neko
 
-Tags = [tag for tag in (models.CATEGORIES)]
+SFW_Tags = [tag for tag in (models.CATEGORIES)]
+NSFW_Tags = requests.get(API).json()["/"]
+
+Tags = "<b>SFW</b> :\n"
+for TAG in SFW_Tags:
+    Tags += f" <code>{TAG}</code>,  "
+Tags += "\n\n<b>NSFW</b> : \n"
+for tAg in NSFW_Tags:
+    Tags += f" <code>{tAg}</code>,  "
 
 @userge.on_cmd(
-    "bnekos",
+    "nekos",
     about={
-        "header": "Get SFW stuff from nekos.best",
-        "usage": "{tr}bnekos for random\n{tr}bnekos [Choice]",
+        "header": "Get Nekos from nekos.best",
+        "usage": "{tr}nekos for random\n{tr}nekos -nsfw for random nsfw\n{tr}nekos [Choice]",
         "Choice": Tags,
     },
 )
 async def neko_life(message: Message):
-    choice = message.input_str
-    if not choice:
-            link = (await client.get_image(random.choice(Tags), 1)).url
-    if choice:
-        input_choice = (choice.strip()).lower()
-        if input_choice in Tags:
+    choice = message.filtered_input_str
+    if "-nsfw" in message.flags:
+            link = (requests.get(API+random.choice(NSFW_Tags))).json()["url"]
+    elif choice:
+        input_choice = choice.lower()
+        if input_choice in SFW_Tags:
             link = (await client.get_image(input_choice, 1)).url
+        elif input_choice in NSFW_Tags:
+            link = (requests.get(API+input_choice)).json()["url"]
         else:
             await message.err(
                 "Choose a valid Input !, See Help for more info.", del_in=5
             )
             return
+    else:
+        link = (await client.get_image(random.choice(SFW_Tags), 1)).url
     await message.delete()
 
     try:
-        await send_nekosbest(message, link)
+        await send_nekos(message, link)
     except (MediaEmpty, WebpageCurlFailed):
         link = download(link)
-        await send_nekosbest(message, link)
+        await send_nekos(message, link)
         os.remove(link)
 
 
-async def send_nekosbest(message: Message, link: str):
+async def send_nekos(message: Message, link: str):
     reply = message.reply_to_message
     reply_id = reply.message_id if reply else None
     if link.endswith(".gif"):
