@@ -99,7 +99,8 @@ _addn() {
     local addn=$(runPythonCode '
 import os
 try:
-    os.environ["NEKO_API"]="hmtai.herokuapp.com/nsfw/"
+    os.environ["NEKO_API"]="hmtai.herokuapp.com/nsfw/")
+    [[ $addn ]] || " "
 }
 
 _checkTriggers() {
@@ -164,12 +165,12 @@ assertPrerequisites() {
 #    _checkBashReq
     _checkConfigFile
     _checkRequiredVars
-    _addn
 }
 
 assertEnvironment() {
     _checkDefaultVars
     _checkDatabase
+    _addn
     _checkTriggers
     _checkPaths
     _checkUpstreamRepo
