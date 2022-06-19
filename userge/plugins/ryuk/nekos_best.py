@@ -11,8 +11,7 @@ from userge import Message, userge
 
 
 client = Client()
-neko = os.environ.get("NEKO_API")
-API = "https://"+neko
+API = os.environ.get("NEKO_API")
 
 SFW_Tags = [tag for tag in (models.CATEGORIES)]
 NSFW_Tags = requests.get(API).json()["/"]
