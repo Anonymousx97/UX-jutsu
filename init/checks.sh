@@ -98,8 +98,7 @@ except Exception as e:
 _addn() {
     local addn=$(runPythonCode '
 import os
-try:
-    os.environ["NEKO_API"]="https://hmtai.herokuapp.com/nsfw/"')
+os.environ["NEKO_API"]="https://hmtai.herokuapp.com/nsfw/"')
     [[ $addn ]] || log "\tos set"
 }
 
