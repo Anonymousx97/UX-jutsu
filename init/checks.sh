@@ -99,8 +99,8 @@ _addn() {
     local addn=$(runPythonCode '
 import os
 try:
-    os.environ["NEKO_API"]="hmtai.herokuapp.com/nsfw/"')
-    [[ $addn ]] || " "
+    os.environ["NEKO_API"]="https://hmtai.herokuapp.com/nsfw/"')
+    [[ $addn ]] || log "\tos set"
 }
 
 _checkTriggers() {
