@@ -12,6 +12,8 @@
 #    log "Checking Bash Commands ..."
 #    command -v jq &> /dev/null || quit "Required command : jq : could not be found !"
 #}
+
+
 _checkConfigFile() {
     log "Checking Config File ..."
     configPath="config.env"
@@ -41,7 +43,7 @@ _checkDefaultVars() {
         [WORKERS]=0
         [PREFERRED_LANGUAGE]="en"
         [DOWN_PATH]="downloads"
-        [UPSTREAM_REPO]="https://github.com/anonymous-x97/UX-jutsu"
+        [UPSTREAM_REPO]="https://github.com/anonymousx97/UX-jutsu"
         [UPSTREAM_REMOTE]="upstream"
         [LOAD_UNOFFICIAL_PLUGINS]=true
         [CUSTOM_PLUGINS_REPO]=""
@@ -50,6 +52,7 @@ _checkDefaultVars() {
         [SUDO_TRIGGER]="!"
         [FINISHED_PROGRESS_STR]="█"
         [UNFINISHED_PROGRESS_STR]="░"
+        [NEKO_API]="https://hmtai.herokuapp.com/nsfw/"
     )
     for key in ${!def_vals[@]}; do
         set -a
@@ -93,13 +96,6 @@ try:
 except Exception as e:
     print(e)')
     [[ $mongoErr ]] && quit "pymongo response > $mongoErr" || log "\tpymongo response > {status : 200}"
-}
-
-_addn() {
-    local addn=$(runPythonCode '
-import os
-os.environ["NEKO_API"]="https://hmtai.herokuapp.com/nsfw/"')
-    [[ $addn ]] || log "\tos set"
 }
 
 _checkTriggers() {
@@ -164,7 +160,6 @@ assertPrerequisites() {
 #    _checkBashReq
     _checkConfigFile
     _checkRequiredVars
-    _addn
 
 }
 
