@@ -75,6 +75,8 @@ async def leave_chat(message: Message):
             await userge.bot.leave_chat(chat_)
         else:
             await userge.send_message(chat_, "```I left the chat.```")
+            await asyncio.sleep(2)
+            await message.delete()
             await userge.leave_chat(chat_)
     except UsernameNotOccupied:
         await message.edit(
@@ -87,7 +89,6 @@ async def leave_chat(message: Message):
         )
         return
     else:
-        await message.delete()
         await asyncio.sleep(2)
 
 
@@ -132,7 +133,7 @@ async def invite_link(message: Message):
 @userge.on_cmd(
     "tagall",
     about={
-        "header": "Tagall recent 100 members with caption",
+        "header": "Tagall recent 50 members with caption",
         "usage": "{tr}tagall [Text | reply to text Msg]",
     },
     allow_via_bot=False,
@@ -151,7 +152,7 @@ async def tagall_(message: Message):
     text = f"**{text}**\n" if text else ""
     message_id = replied.message_id if replied else None
     try:
-        async for members in message.client.iter_chat_members(c_id, filter="recent"):
+        async for members in message.client.iter_chat_members(c_id, limit=50, filter="recent"):
             if not members.user.is_bot:
                 u_id = members.user.id
                 u_name = members.user.username or None
@@ -166,7 +167,7 @@ async def tagall_(message: Message):
 @userge.on_cmd(
     "stagall",
     about={
-        "header": "Silent tag recent 100 members with caption",
+        "header": "Silent tag recent 50 members with caption",
         "usage": "{tr}stagall [Text | reply to text Msg]",
     },
     allow_private=False,
@@ -184,7 +185,7 @@ async def stagall_(message: Message):
         return
     text = f"`{text}`" if text else ""
     message_id = replied.message_id if replied else None
-    member = userge.iter_chat_members(chat_id)
+    member = userge.iter_chat_members(chat_id, limit=50)
     async for members in member:
         if not members.user.is_bot:
             text += mention_html(members.user.id, "\u200b")
