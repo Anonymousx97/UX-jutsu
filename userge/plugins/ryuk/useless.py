@@ -11,15 +11,18 @@ CHANNEL = userge.getCLogger(__name__)
     },
 )
 async def jc(message: Message):
-    replied = message.reply_to_message
-    link = replied.text if replied else message.input_str
+    link = message.reply_to_message.text or message.input_str
     if not link:
         await message.edit(
             "```Bruh, Without chat name, I can't Join...^_^```", del_in=3
         )
         return
-    await userge.join_chat(link)
-    return await channel.send_message
+    try:
+        await userge.join_chat(link)
+    except KeyError:
+        await userge.join_chat(link.split("/")[-1])
+    return await message.reply("Joined")
+
 
 
 @userge.on_cmd(
@@ -31,9 +34,12 @@ async def jc(message: Message):
     },
 )
 async def clck(message: Message):
-    button = message.input_str
-    if not button:
-        press = message.replied
-        await press.click(0)
-    x = message.replied
-    await x.click(button)
+    button_name = message.input_str
+    button = message.reply_to_message
+    try:
+        if button_name:
+            await button.click(button_name)
+        else:
+            await button.click(0)
+    except TimeoutError:
+        return
