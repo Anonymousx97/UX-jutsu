@@ -11,7 +11,8 @@ CHANNEL = userge.getCLogger(__name__)
     },
 )
 async def jc(message: Message):
-    link = message.reply_to_message.text or message.input_str
+    reply = message.reply_to_message.text
+    link = reply if reply else message.input_str
     if not link:
         await message.edit(
             "```Bruh, Without chat name, I can't Join...^_^```", del_in=3
