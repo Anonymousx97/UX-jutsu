@@ -74,9 +74,9 @@ async def leave_chat(message: Message):
         if "-b" in message.flags:
             await userge.bot.leave_chat(chat_)
         else:
-            await userge.send_message(chat_, "```I left the chat.```")
-            await asyncio.sleep(2)
-            await message.delete()
+            msg = await userge.send_message(chat_, "```I left the chat.```")
+            await asyncio.sleep(1)
+            await message.delete(msg)
             await userge.leave_chat(chat_)
     except UsernameNotOccupied:
         await message.edit(
