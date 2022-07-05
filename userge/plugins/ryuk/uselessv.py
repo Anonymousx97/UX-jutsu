@@ -174,7 +174,7 @@ async def list_video(message: Message):
     filters.regex(r"^https://www.instagram.com/reel/*")|
     filters.regex(r"^https://vm.tiktok.com/*")|
     filters.regex(r"^https://www.instagram.com/tv/*")|
-    filters.regex(r"^https://twitter.com/*")|
+    filters.regex(r"https://twitter.com/*")|
     filters.regex(r"^https://youtube.com/shorts/*")))
 async def my_handler(userge, message: Message):
    chat_id = message.chat.id
@@ -207,7 +207,7 @@ async def my_handler(userge, message: Message):
 async def _tubeDl(url: list, startTime):
     _opts = {
         "outtmpl": os.path.join(
-            Config.DOWN_PATH, str(startTime), "%(title)s-%(format)s.%(ext)s"
+            Config.DOWN_PATH, str(startTime), "vid-%(format)s.%(ext)s"
         ),
         "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
         "prefer_ffmpeg": True,
