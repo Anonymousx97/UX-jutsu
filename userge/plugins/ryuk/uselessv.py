@@ -180,10 +180,13 @@ async def my_handler(userge, message: Message):
    chat_id = message.chat.id
    chat = await VID_LIST.find_one({"chat_id": chat_id})
    if chat:
-    x = message.text
+    x = message.text.split()
+    for L in x:
+        if "http" in L:
+            link = L
     startTime = c_time = time()
     try:
-        await _tubeDl([x], startTime)
+        await _tubeDl([link], startTime)
     except Exception as f_e:
         _LOG.exception(f_e)
         CHANNEL.log(f_e)
