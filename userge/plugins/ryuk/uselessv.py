@@ -5,6 +5,7 @@ import os
 import asyncio
 import glob
 import yt_dlp
+import shutil
 import shlex
 from typing import List, Optional, Tuple
 from time import time
@@ -184,7 +185,8 @@ async def my_handler(userge, message: Message):
     for L in x:
         if "http" in L:
             link = L
-    startTime = c_time = time()
+    startTime = time()
+    dl_path = os.path.join(Config.DOWN_PATH, str(starttime))
     try:
         await _tubeDl([link], startTime)
     except Exception as f_e:
@@ -192,18 +194,17 @@ async def my_handler(userge, message: Message):
         CHANNEL.log(f_e)
         return await message.reply("**Link not supported or private.** 🥲")
     _fpath = ""
-    for _path in glob.glob(os.path.join(Config.DOWN_PATH, str(startTime), "*")):
+    for _path in glob.glob(os.path.join(dl_path, "*")):
        if not _path.lower().endswith((".jpg", ".png", ".webp")):
         _fpath = _path
     await take_screen_shot(_fpath, 0.1, startTime)
     _tpath = ""
-    for _path in glob.glob(os.path.join(Config.DOWN_PATH, str(startTime), "*")):
+    for _path in glob.glob(os.path.join(dl_path, "*")):
        if _path.lower().endswith((".jpg", ".png", ".webp")):
         _tpath= _path
     await message.reply_video(video=_fpath, thumb=_tpath)
-    if os.path.exists(str(_fpath)):
-        os.remove(_fpath)
-        os.remove(_tpath)
+    if os.path.exists(str(dl_path)):
+        shutil.rmtree(dl_path)
 
              
 
