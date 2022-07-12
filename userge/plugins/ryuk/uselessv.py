@@ -192,10 +192,10 @@ async def my_handler(userge, message: Message):
         for L in x:
             if "http" in L:
                 link = L
-        startTime = time()
+        starttime = time()
         dl_path = os.path.join(Config.DOWN_PATH, str(starttime))
         try:
-            await _tubeDl([link], startTime)
+            await _tubeDl([link], starttime)
         except Exception as f_e:
             _LOG.exception(f_e)
             CHANNEL.log(f_e)
@@ -204,7 +204,7 @@ async def my_handler(userge, message: Message):
         for _path in glob.glob(os.path.join(dl_path, "*")):
             if not _path.lower().endswith((".jpg", ".png", ".webp")):
                 _fpath = _path
-        await take_screen_shot(_fpath, 0.1, startTime)
+        await take_screen_shot(_fpath, 0.1, starttime)
         _tpath = ""
         for _path in glob.glob(os.path.join(dl_path, "*")):
             if _path.lower().endswith((".jpg", ".png", ".webp")):
@@ -214,10 +214,10 @@ async def my_handler(userge, message: Message):
             shutil.rmtree(dl_path)
 
 
-async def _tubeDl(url: list, startTime):
+async def _tubeDl(url: list, starttime):
     _opts = {
         "outtmpl": os.path.join(
-            Config.DOWN_PATH, str(startTime), "vid-%(format)s.%(ext)s"
+            Config.DOWN_PATH, str(starttime), "vid-%(format)s.%(ext)s"
         ),
         "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
         "prefer_ffmpeg": True,
@@ -227,11 +227,11 @@ async def _tubeDl(url: list, startTime):
     x.download(url)
 
 
-async def take_screen_shot(video_file: str, duration: int, startTime) -> Optional[str]:
+async def take_screen_shot(video_file: str, duration: int, starttime) -> Optional[str]:
     """take a screenshot"""
     ttl = duration // 2
     thumb_image_path = os.path.join(
-        Config.DOWN_PATH, str(startTime), f"{basename(video_file)}.jpg"
+        Config.DOWN_PATH, str(starttime), f"{basename(video_file)}.jpg"
     )
     command = f'''ffmpeg -ss {ttl} -i "{video_file}" -vframes 1 "{thumb_image_path}"'''
     (await runcmd(command))[1]
