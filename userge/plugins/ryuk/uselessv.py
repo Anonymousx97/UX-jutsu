@@ -1,16 +1,16 @@
 ### Made by Ryuk ###
 ### Based on code from UX ###
 
-import os
 import asyncio
 import glob
-import yt_dlp
-import shutil
+import os
 import shlex
-from typing import List, Optional, Tuple
-from time import time
-from pathlib import Path
+import shutil
 from os.path import basename
+from time import time
+from typing import Optional, Tuple
+
+import yt_dlp
 from pyrogram import filters
 from userge import Config, Message, get_collection, userge
 from userge.utils.exceptions import StopConversation
@@ -81,7 +81,11 @@ async def del_v(message: Message):
         try:
             async with userge.conversation(message.chat.id, timeout=10) as conv:
                 response = await conv.get_response(
-                    mark_read=True, filters=(filters.user([one for one in Config.TRUSTED_SUDO_USERS])|filters.me),
+                    mark_read=True,
+                    filters=(
+                        filters.user([one for one in Config.TRUSTED_SUDO_USERS])
+                        | filters.me
+                    ),
                 )
         except (TimeoutError, StopConversation):
             msg_ += "\n\n### Process cancelled as no response given. ###"
@@ -170,43 +174,45 @@ async def list_video(message: Message):
         )
 
 
-
-@userge.on_message(~filters.edited&(
-    filters.regex(r"^https://www.instagram.com/reel/*")|
-    filters.regex(r"^https://vm.tiktok.com/*")|
-    filters.regex(r"^https://www.instagram.com/tv/*")|
-    filters.regex(r"https://twitter.com/*")|
-    filters.regex(r"^https://youtube.com/shorts/*")))
+@userge.on_message(
+    ~filters.edited
+    & (
+        filters.regex(r"^https://www.instagram.com/reel/*")
+        | filters.regex(r"^https://vm.tiktok.com/*")
+        | filters.regex(r"^https://www.instagram.com/tv/*")
+        | filters.regex(r"https://twitter.com/*")
+        | filters.regex(r"^https://youtube.com/shorts/*")
+    )
+)
 async def my_handler(userge, message: Message):
-   chat_id = message.chat.id
-   chat = await VID_LIST.find_one({"chat_id": chat_id})
-   if chat:
-    x = message.text.split()
-    for L in x:
-        if "http" in L:
-            link = L
-    startTime = time()
-    dl_path = os.path.join(Config.DOWN_PATH, str(starttime))
-    try:
-        await _tubeDl([link], startTime)
-    except Exception as f_e:
-        _LOG.exception(f_e)
-        CHANNEL.log(f_e)
-        return await message.reply("**Link not supported or private.** 🥲")
-    _fpath = ""
-    for _path in glob.glob(os.path.join(dl_path, "*")):
-       if not _path.lower().endswith((".jpg", ".png", ".webp")):
-        _fpath = _path
-    await take_screen_shot(_fpath, 0.1, startTime)
-    _tpath = ""
-    for _path in glob.glob(os.path.join(dl_path, "*")):
-       if _path.lower().endswith((".jpg", ".png", ".webp")):
-        _tpath= _path
-    await message.reply_video(video=_fpath, thumb=_tpath)
-    if os.path.exists(str(dl_path)):
-        shutil.rmtree(dl_path)
+    chat_id = message.chat.id
+    chat = await VID_LIST.find_one({"chat_id": chat_id})
+    if chat:
+        x = message.text.split()
+        for L in x:
+            if "http" in L:
+                link = L
+        startTime = time()
+        dl_path = os.path.join(Config.DOWN_PATH, str(starttime))
+        try:
+            await _tubeDl([link], startTime)
+        except Exception as f_e:
+            _LOG.exception(f_e)
+            CHANNEL.log(f_e)
+            return await message.reply("**Link not supported or private.** 🥲")
+        _fpath = ""
+        for _path in glob.glob(os.path.join(dl_path, "*")):
+            if not _path.lower().endswith((".jpg", ".png", ".webp")):
+                _fpath = _path
+        await take_screen_shot(_fpath, 0.1, startTime)
+        _tpath = ""
+        for _path in glob.glob(os.path.join(dl_path, "*")):
+            if _path.lower().endswith((".jpg", ".png", ".webp")):
+                _tpath = _path
+        await message.reply_video(video=_fpath, thumb=_tpath)
+        if os.path.exists(str(dl_path)):
+            shutil.rmtree(dl_path)
 
-             
 
 async def _tubeDl(url: list, startTime):
     _opts = {
@@ -218,19 +224,17 @@ async def _tubeDl(url: list, startTime):
         "postprocessors": [{"key": "FFmpegMetadata"}],
     }
     x = yt_dlp.YoutubeDL(_opts)
-    dloader = x.download(url)
+    x.download(url)
 
 
-async def take_screen_shot(
-    video_file: str, duration: int, startTime
-) -> Optional[str]:
+async def take_screen_shot(video_file: str, duration: int, startTime) -> Optional[str]:
     """take a screenshot"""
     ttl = duration // 2
     thumb_image_path = os.path.join(
         Config.DOWN_PATH, str(startTime), f"{basename(video_file)}.jpg"
     )
     command = f'''ffmpeg -ss {ttl} -i "{video_file}" -vframes 1 "{thumb_image_path}"'''
-    err = (await runcmd(command))[1]
+    (await runcmd(command))[1]
     return thumb_image_path if os.path.exists(thumb_image_path) else None
 
 
@@ -252,6 +256,6 @@ async def runcmd(cmd: str) -> Tuple[str, str, int, int]:
 def full_name(user: dict):
     try:
         f_name = " ".join([user.first_name, user.last_name or ""])
-    except:
+    except BaseException:
         raise
     return f_name
