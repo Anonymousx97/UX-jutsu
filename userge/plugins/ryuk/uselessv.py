@@ -1,14 +1,11 @@
 ### Made by Ryuk ###
 ### Based on code from UX ###
 
-import asyncio
 import glob
 import os
-import shlex
 import shutil
-from os.path import basename
+from subprocess import call
 from time import time
-from typing import Optional, Tuple
 
 import yt_dlp
 from pyrogram import filters
@@ -192,65 +189,40 @@ async def my_handler(userge, message: Message):
         for L in x:
             if "http" in L:
                 link = L
-        starttime = time()
-        dl_path = os.path.join(Config.DOWN_PATH, str(starttime))
-        try:
-            await _tubeDl([link], starttime)
-        except Exception as f_e:
-            _LOG.exception(f_e)
-            CHANNEL.log(f_e)
-            return await message.reply("**Link not supported or private.** 🥲")
-        _fpath = ""
-        for _path in glob.glob(os.path.join(dl_path, "*")):
-            if not _path.lower().endswith((".jpg", ".png", ".webp")):
-                _fpath = _path
-        await take_screen_shot(_fpath, 0.1, starttime)
-        _tpath = ""
-        for _path in glob.glob(os.path.join(dl_path, "*")):
-            if _path.lower().endswith((".jpg", ".png", ".webp")):
-                _tpath = _path
-        await message.reply_video(video=_fpath, thumb=_tpath)
-        if os.path.exists(str(dl_path)):
-            shutil.rmtree(dl_path)
+                startTime = time()
+                dl_path = os.path.join(Config.DOWN_PATH, str(startTime))
+                try:
+                    await _tubeDl([link], startTime)
+                    _fpath = ""
+                    _tpath = ""
+                    for _path in glob.glob(os.path.join(dl_path, "*")):
+                        if not _path.lower().endswith((".jpg", ".png", ".webp")):
+                            _fpath = _path
+                            command = f'''ffmpeg -ss 0.1 -i "{_fpath}" -vframes 1 "{dl_path}/i.jpg"'''
+                            call(command, shell=True)
+                    for _path in glob.glob(os.path.join(dl_path, "*")):
+                        if _path.lower().endswith((".jpg", ".png", ".webp")):
+                            _tpath = _path
+                    await message.reply_video(video=_fpath, thumb=_tpath)
+                    if os.path.exists(str(dl_path)):
+                        shutil.rmtree(dl_path)
+                except Exception as f_e:
+                    _LOG.exception(f_e)
+                    await message.reply("**Link not supported or private.** 🥲")
+                    pass
 
 
-async def _tubeDl(url: list, starttime):
+async def _tubeDl(url: list, startTime):
     _opts = {
         "outtmpl": os.path.join(
-            Config.DOWN_PATH, str(starttime), "vid-%(format)s.%(ext)s"
+            Config.DOWN_PATH, str(startTime), "vid-%(format)s.%(ext)s"
         ),
         "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
         "prefer_ffmpeg": True,
-        "postprocessors": [{"key": "FFmpegMetadata"}],
+        "postprocessors": [{"key": "FFmpegMetadata"}, {"key": "EmbedThumbnail"}],
     }
     x = yt_dlp.YoutubeDL(_opts)
     x.download(url)
-
-
-async def take_screen_shot(video_file: str, duration: int, starttime) -> Optional[str]:
-    """take a screenshot"""
-    ttl = duration // 2
-    thumb_image_path = os.path.join(
-        Config.DOWN_PATH, str(starttime), f"{basename(video_file)}.jpg"
-    )
-    command = f'''ffmpeg -ss {ttl} -i "{video_file}" -vframes 1 "{thumb_image_path}"'''
-    (await runcmd(command))[1]
-    return thumb_image_path if os.path.exists(thumb_image_path) else None
-
-
-async def runcmd(cmd: str) -> Tuple[str, str, int, int]:
-    """run command in terminal"""
-    args = shlex.split(cmd)
-    process = await asyncio.create_subprocess_exec(
-        *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-    )
-    stdout, stderr = await process.communicate()
-    return (
-        stdout.decode("utf-8", "replace").strip(),
-        stderr.decode("utf-8", "replace").strip(),
-        process.returncode,
-        process.pid,
-    )
 
 
 def full_name(user: dict):
