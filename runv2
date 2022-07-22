@@ -1,0 +1,5 @@
+run(){
+service apache2 restart
+bash run}
+
+run
