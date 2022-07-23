@@ -1,6 +1,0 @@
-run(){
-bash run
-service apache2 restart
-}
-
-run
