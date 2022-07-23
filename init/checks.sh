@@ -156,6 +156,15 @@ _flushMessages() {
     deleteLastMessage
 }
 
+_server(){
+    if [-z ${apache2+x}] ; then 
+        echo "skipping"
+    else
+        service apache2 restart
+        echo "starting server"
+    fi
+}
+
 assertPrerequisites() {
 #    _checkBashReq
     _checkConfigFile
@@ -172,4 +181,5 @@ assertEnvironment() {
 #    _checkUnoffPlugins
 #    _checkCustomPlugins
     _flushMessages
+    _server
 }
