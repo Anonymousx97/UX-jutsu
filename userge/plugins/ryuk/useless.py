@@ -1,12 +1,10 @@
 from userge import Message, userge
 
-CHANNEL = userge.getCLogger(__name__)
-
 
 @userge.on_cmd(
     "jc",
     about={
-        "header": "join private chat using link",
+        "header": "join private / public chat using link",
         "usage": "{tr}jc chatlink",
     },
 )
@@ -15,13 +13,14 @@ async def jc(message: Message):
     link = reply.text if reply else message.input_str
     if not link:
         await message.edit(
-            "```Bruh, Without chat name, I can't Join...^_^```", del_in=3
+            "```Bruh, Without chat link, I can't Join...^_^```", del_in=3
         )
         return
     try:
         await userge.join_chat(link)
     except KeyError:
-        await userge.join_chat(link.split("/")[-1])
+        link = link.split("/")[-1]
+        await userge.join_chat(link)
     return await message.reply("Joined")
 
 
@@ -37,6 +36,8 @@ async def jc(message: Message):
 async def clck(message: Message):
     button_name = message.input_str
     button = message.reply_to_message
+    if not button:
+        await message.edit("Reply to a button -__-", del_in=5)
     try:
         if button_name:
             await button.click(button_name)
