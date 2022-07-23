@@ -157,11 +157,11 @@ _flushMessages() {
 }
 
 _server(){
-    if [-z ${apache2+x}] ; then 
-        echo "skipping"
+    if $APACHE2 ; then 
+        echo "Skipping..."
     else
         service apache2 restart
-        echo "starting server"
+        echo "Starting Server..."
     fi
 }
 
