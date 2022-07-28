@@ -20,7 +20,7 @@ import yt_dlp as ytdl
 from userge import Config, Message, pool, userge
 from userge.utils import humanbytes, time_formatter
 
-from .uploads import upload
+from userge.plugins.misc.uploads import upload
 
 LOGGER = userge.getLogger(__name__)
 
@@ -126,34 +126,39 @@ async def ytDown(message: Message):
             userge.loop.create_task(message.edit(out))
 
     await message.edit("Hold on \u23f3 ..")
+    reply = message.reply_to_message
+    input_ = reply.text if reply else message.filtered_input_str
+    for i in input_.split():
+        if "http" in i:
+            url = i
     if bool(message.flags):
         desiredFormat1 = str(message.flags.get("a", ""))
         desiredFormat2 = str(message.flags.get("v", ""))
         if "m" in message.flags:
-            retcode = await _mp3Dl([message.filtered_input_str], __progress, startTime)
+            retcode = await _mp3Dl([url], __progress, startTime)
         elif all(k in message.flags for k in ("a", "v")):
             # 1st format must contain the video
             desiredFormat = "+".join([desiredFormat2, desiredFormat1])
             retcode = await _tubeDl(
-                [message.filtered_input_str], __progress, startTime, desiredFormat
+                [url], __progress, startTime, desiredFormat
             )
         elif "a" in message.flags:
             desiredFormat = desiredFormat1
             retcode = await _tubeDl(
-                [message.filtered_input_str], __progress, startTime, desiredFormat
+                [url], __progress, startTime, desiredFormat
             )
         elif "v" in message.flags:
             desiredFormat = desiredFormat2 + "+bestaudio"
             retcode = await _tubeDl(
-                [message.filtered_input_str], __progress, startTime, desiredFormat
+                [url], __progress, startTime, desiredFormat
             )
         else:
             retcode = await _tubeDl(
-                [message.filtered_input_str], __progress, startTime, None
+                [url], __progress, startTime, None
             )
     else:
         retcode = await _tubeDl(
-            [message.filtered_input_str], __progress, startTime, None
+            [url], __progress, startTime, None
         )
     if retcode == 0:
         _fpath = ""
@@ -166,10 +171,10 @@ async def ytDown(message: Message):
         await message.edit(
             f"**YTDL completed in {round(time() - startTime)} seconds**\n`{_fpath}`"
         )
-    if "s" in message.flags:
-        await message.edit(str(retcode))
-    else:
-        await upload(message, Path(_fpath))
+        if "s" in message.flags:
+            await message.edit(str(retcode))
+        else:
+            await upload(message, Path(_fpath))
 
 
 @userge.on_cmd(
