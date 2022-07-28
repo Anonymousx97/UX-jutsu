@@ -160,21 +160,20 @@ async def ytDown(message: Message):
         retcode = await _tubeDl(
             [url], __progress, startTime, None
         )
+    _fpath = ""
     if retcode == 0:
-        _fpath = ""
         for _path in glob.glob(os.path.join(Config.DOWN_PATH, str(startTime), "*")):
             if not _path.lower().endswith((".jpg", ".png", ".webp")):
                 _fpath = _path
-        if not _fpath:
-            await message.err("nothing found !")
-            return
-        await message.edit(
-            f"**YTDL completed in {round(time() - startTime)} seconds**\n`{_fpath}`"
-        )
-        if "s" in message.flags:
-            await message.edit(str(retcode))
-        else:
-            await upload(message, Path(_fpath))
+    if not _fpath:
+            return await message.err("nothing found !")
+    await message.edit(
+        f"**YTDL completed in {round(time() - startTime)} seconds**\n`{_fpath}`"
+    )
+    if "s" in message.flags:
+        await message.edit(str(retcode))
+    else:
+        await upload(message, Path(_fpath))
 
 
 @userge.on_cmd(
