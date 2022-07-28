@@ -186,6 +186,7 @@ async def my_handler(userge, message: Message):
     chat = await VID_LIST.find_one({"chat_id": chat_id})
     if chat:
         x = message.text.split()
+        await message.delete()
         for L in x:
             if "http" in L:
                 link = L
