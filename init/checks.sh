@@ -8,10 +8,26 @@
 #
 # All rights reserved.
 
-#_checkBashReq() {
-#    log "Checking Bash Commands ..."
-#    command -v jq &> /dev/null || quit "Required command : jq : could not be found !"
-#}
+
+_checkBashReq() {
+    log "Checking Bash Commands ..."
+    command -v jq &> /dev/null || quit "Required command : jq : could not be found !"
+}
+
+_checkPythonVersion() {
+    log "Checking Python Version ..."
+    getPythonVersion
+    ( test -z $pVer || test $(sed 's/\.//g' <<< $pVer) -lt 3${minPVer}0 ) \
+        && quit "You MUST have a python version of at least 3.$minPVer.0 !"
+    log "\tFound PYTHON - v$pVer ..."
+}
+
+_installReq() {
+    if [[ $HEROKU_ENV == 1 ]] ; then
+        log "Silently Updating Requirements..."
+        pip install --no-cache-dir -r -q requirements.txt
+    fi
+}
 
 
 _checkConfigFile() {
@@ -122,26 +138,26 @@ _checkUpstreamRepo() {
     updateBuffer
 }
 
-#_setupPlugins() {
-#    local link path tmp
-#    if test $(grep -P '^'$2'$' <<< $3); then
-#        editLastMessage "Cloning $1 Plugins ..."
-#        link=$(test $4 && echo $4 || echo $3)
-#        tmp=Temp-Plugins
-#        gitClone --depth=1 $link $tmp
-#        replyLastMessage "\tInstalling Requirements ..."
-#        upgradePip
-#        installReq $tmp
-#        path=$(tr "[:upper:]" "[:lower:]" <<< $1)
-#        rm -rf userge/plugins/$path/
-#        mv $tmp/plugins/ userge/plugins/$path/
-#        cp -r $tmp/resources/. resources/
-#        rm -rf $tmp/
-#        deleteLastMessage
-#    else
-#        editLastMessage "$1 Plugins Disabled !"
-#    fi
-#}
+_setupPlugins() {
+    local link path tmp
+    if test $(grep -P '^'$2'$' <<< $3); then
+        editLastMessage "Cloning $1 Plugins ..."
+        link=$(test $4 && echo $4 || echo $3)
+        tmp=Temp-Plugins
+        gitClone --depth=1 $link $tmp
+        replyLastMessage "\tInstalling Requirements ..."
+        upgradePip
+        installReq $tmp
+        path=$(tr "[:upper:]" "[:lower:]" <<< $1)
+        rm -rf userge/plugins/$path/
+        mv $tmp/plugins/ userge/plugins/$path/
+        cp -r $tmp/resources/. resources/
+        rm -rf $tmp/
+        deleteLastMessage
+    else
+        editLastMessage "$1 Plugins Disabled !"
+    fi
+}
 
 _checkUnoffPlugins() {
     # _setupPlugins Xtra true $LOAD_UNOFFICIAL_PLUGINS https://github.com/ashwinstr/Userge-Plugins-Fork.git
@@ -167,6 +183,8 @@ _server() {
 
 assertPrerequisites() {
 #    _checkBashReq
+#    _checkPythonVersion
+    _installReq
     _checkConfigFile
     _checkRequiredVars
 
