@@ -199,7 +199,7 @@ async def video_dl(userge, message: Message):
                         f'''ffmpeg -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',
                         shell=True,
                     )
-                    await message.reply_video(video=video_path, thumb=thumb_path)
+                    await userge.send_video(chat_id, video=video_path, thumb=thumb_path)
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
                 except Exception as f_e:
