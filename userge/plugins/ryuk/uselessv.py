@@ -1,7 +1,6 @@
 ### Made by Ryuk ###
 ### Based on code from UX ###
 
-import glob
 import os
 import shutil
 from subprocess import call
@@ -181,43 +180,41 @@ async def list_video(message: Message):
         | filters.regex(r"^https://youtube.com/shorts/*")
     )
 )
-async def my_handler(userge, message: Message):
+async def video_dl(userge, message: Message):
     chat_id = message.chat.id
     chat = await VID_LIST.find_one({"chat_id": chat_id})
+    del_link = True
     if chat:
-        x = message.text.split()
-        await message.delete()
-        for L in x:
-            if "http" in L:
-                link = L
+        msg = await userge.send_message(chat_id, "`Trying to download...`")
+        raw_message = message.text.split()
+        for link in raw_message:
+            if "http" in link:
                 startTime = time()
-                dl_path = os.path.join(Config.DOWN_PATH, str(startTime))
+                dl_path = f"downloads/{str(startTime)}"
                 try:
-                    await _tubeDl([link], startTime)
-                    _fpath = ""
-                    _tpath = ""
-                    for _path in glob.glob(os.path.join(dl_path, "*")):
-                        if not _path.lower().endswith((".jpg", ".png", ".webp")):
-                            _fpath = _path
-                            command = f'''ffmpeg -ss 0.1 -i "{_fpath}" -vframes 1 "{dl_path}/i.jpg"'''
-                            call(command, shell=True)
-                    for _path in glob.glob(os.path.join(dl_path, "*")):
-                        if _path.lower().endswith((".jpg", ".png", ".webp")):
-                            _tpath = _path
-                    await message.reply_video(video=_fpath, thumb=_tpath)
+                    await _tubeDl(url=link, path=dl_path)
+                    video_path = f"{dl_path}/video.mp4"
+                    thumb_path = f"{dl_path}/i.jpg"
+                    call(
+                        f'''ffmpeg -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',
+                        shell=True,
+                    )
+                    await message.reply_video(video=video_path, thumb=thumb_path)
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
                 except Exception as f_e:
                     _LOG.exception(f_e)
                     await message.reply("**Link not supported or private.** 🥲")
-                    pass
+                    del_link = False
+                    continue
+        await msg.delete()
+        if del_link:
+            await message.delete()
 
 
-async def _tubeDl(url: list, startTime):
+async def _tubeDl(url, path):
     _opts = {
-        "outtmpl": os.path.join(
-            Config.DOWN_PATH, str(startTime), "vid-%(format)s.%(ext)s"
-        ),
+        "outtmpl": f"{path}/video.mp4",
         "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
         "prefer_ffmpeg": True,
         "postprocessors": [{"key": "FFmpegMetadata"}, {"key": "EmbedThumbnail"}],
