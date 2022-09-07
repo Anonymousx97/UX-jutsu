@@ -174,7 +174,7 @@ async def list_video(message: Message):
     ~filters.edited
     & (
         filters.regex(r"^https://www.instagram.com/reel/*")
-        | filters.regex(r"^https://vm.tiktok.com/*")
+        | filters.regex(r"^dhttp")
         | filters.regex(r"^https://www.instagram.com/tv/*")
         | filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
