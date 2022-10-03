@@ -656,22 +656,27 @@ if userge.has_bot:
                 me = await userge.get_me()
                 alive_info = Bot_Alive.alive_info(me)
                 buttons = Bot_Alive.alive_buttons()
-                if Config.ALIVE_MEDIA_TYPE == "photo":
-                    results.append(
-                        InlineQueryResultPhoto(
-                            photo_url=Config.NEW_ALIVE_MEDIA,
-                            caption=alive_info,
-                            reply_markup=buttons,
-                        )
-                    )
-                elif Config.ALIVE_MEDIA_TYPE == "gif":
-                    results.append(
-                        InlineQueryResultAnimation(
-                            animation_url=Config.NEW_ALIVE_MEDIA,
-                            caption=alive_info,
-                            reply_markup=buttons,
-                        )
-                    )
+                #if Config.ALIVE_MEDIA_TYPE == "photo":
+                    #results.append(
+                        #InlineQueryResultPhoto(
+                            #photo_url=Config.NEW_ALIVE_MEDIA,
+                            #caption=alive_info,
+                            #reply_markup=buttons,
+                        #)
+                    #)
+                #elif Config.ALIVE_MEDIA_TYPE == "gif":
+                    #results.append(
+                        #InlineQueryResultAnimation(
+                            #animation_url=Config.NEW_ALIVE_MEDIA,
+                            #caption=alive_info,
+                            #reply_markup=buttons,
+                        #)
+                    #)
+                results.append(title="Alive",
+                input_message_content=InputTextMessageContent(alive_info),
+                description="Alive",
+                reply_markup=InlineKeyboardMarkup(buttons),
+                )
 
             if string == "geass":
                 results.append(
