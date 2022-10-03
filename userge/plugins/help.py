@@ -672,11 +672,11 @@ if userge.has_bot:
                             #reply_markup=buttons,
                         #)
                     #)
-                results.append(title="Alive",
+                results.append(InlineQueryResultArticle(title="Alive",
                 input_message_content=InputTextMessageContent(alive_info),
                 description="Alive",
                 reply_markup=InlineKeyboardMarkup(buttons),
-                )
+                ))
 
             if string == "geass":
                 results.append(
