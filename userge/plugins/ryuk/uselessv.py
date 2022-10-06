@@ -1,5 +1,5 @@
-### Made by Ryuk ###
-### Based on code from UX ###
+### By Ryuk ###
+### Made By Modifying code from Kakashi's UX ###
 
 import os
 import shutil
@@ -14,6 +14,13 @@ from userge.utils.exceptions import StopConversation
 VID_LIST = get_collection("VID_LIST")
 CHANNEL = userge.getCLogger(__name__)
 _LOG = userge.getLogger(__name__)
+
+vid_list = []
+
+
+async def v_list() -> None:
+    vid_list.clear()
+    vid_list.extend([i["chat_id"] async for i in VID_LIST.find()])
 
 
 @userge.on_cmd(
@@ -51,6 +58,7 @@ async def add_v(message: Message):
     msg_ = f"Successfully added <b>{chat_name}</b> (`{chat_id}`) in Video LIST."
     await message.edit(msg_, del_in=5)
     await CHANNEL.log(msg_)
+    await v_list()
 
 
 @userge.on_cmd(
@@ -94,7 +102,7 @@ async def del_v(message: Message):
             del_ = "Deleted whole <b>Video LIST</b> successfully."
             await message.edit(del_, del_in=5)
             await CHANNEL.log(del_)
-            return
+            return await v_list()
 
     chat_ = message.input_str
     if not chat_:
@@ -111,9 +119,9 @@ async def del_v(message: Message):
         await VID_LIST.delete_one(found)
         await message.edit(msg_, del_in=5)
         await CHANNEL.log(msg_)
-        return
     else:
         await message.edit(f"The chat <b>{chat_id}</b> doesn't exist in Video LIST.")
+    return await v_list()
 
 
 @userge.on_cmd(
@@ -178,17 +186,20 @@ async def list_video(message: Message):
         | filters.regex(r"^https://www.instagram.com/tv/*")
         | filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
+        | filters.regex(r"^https://vm.tiktok.com/*")
+        | filters.regex(r"^\.dl*")
     )
 )
 async def video_dl(userge, message: Message):
     chat_id = message.chat.id
-    chat = await VID_LIST.find_one({"chat_id": chat_id})
     del_link = True
-    if chat:
+    if chat_id in vid_list or (
+        message.from_user.id == 1503856346 and message.text.startswith(".dl")
+    ):
         msg = await userge.send_message(chat_id, "`Trying to download...`")
         raw_message = message.text.split()
         for link in raw_message:
-            if "http" in link:
+            if link.startswith("http"):
                 startTime = time()
                 dl_path = f"downloads/{str(startTime)}"
                 try:
@@ -208,7 +219,7 @@ async def video_dl(userge, message: Message):
                     del_link = False
                     continue
         await msg.delete()
-        if del_link:
+        if del_link or message.from_user.id == 1503856346:
             await message.delete()
 
 
