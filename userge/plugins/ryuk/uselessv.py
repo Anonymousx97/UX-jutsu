@@ -18,7 +18,7 @@ _LOG = userge.getLogger(__name__)
 vid_list = []
 
 
-async def v_list() -> None:
+async def _init() -> None:
     vid_list.clear()
     vid_list.extend([i["chat_id"] async for i in VID_LIST.find()])
 
@@ -182,7 +182,6 @@ async def list_video(message: Message):
     ~filters.edited
     & (
         filters.regex(r"^https://www.instagram.com/reel/*")
-        | filters.regex(r"^d http")
         | filters.regex(r"^https://www.instagram.com/tv/*")
         | filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
