@@ -58,7 +58,7 @@ async def add_v(message: Message):
     msg_ = f"Successfully added <b>{chat_name}</b> (`{chat_id}`) in Video LIST."
     await message.edit(msg_, del_in=5)
     await CHANNEL.log(msg_)
-    await v_list()
+    await _init()
 
 
 @userge.on_cmd(
@@ -102,7 +102,7 @@ async def del_v(message: Message):
             del_ = "Deleted whole <b>Video LIST</b> successfully."
             await message.edit(del_, del_in=5)
             await CHANNEL.log(del_)
-            return await v_list()
+            return await _init()
 
     chat_ = message.input_str
     if not chat_:
@@ -121,7 +121,7 @@ async def del_v(message: Message):
         await CHANNEL.log(msg_)
     else:
         await message.edit(f"The chat <b>{chat_id}</b> doesn't exist in Video LIST.")
-    return await v_list()
+    return await _init()
 
 
 @userge.on_cmd(
