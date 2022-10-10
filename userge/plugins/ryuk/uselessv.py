@@ -213,7 +213,7 @@ async def video_dl(userge, message: Message):
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
                 except Exception as e:
-                    await CHANNEL.log(e)
+                    await CHANNEL.log(str(e))
                     await message.reply("**Link not supported or private.** 🥲")
                     del_link = False
                     continue
