@@ -13,7 +13,6 @@ from userge.utils.exceptions import StopConversation
 
 VID_LIST = get_collection("VID_LIST")
 CHANNEL = userge.getCLogger(__name__)
-_LOG = userge.getLogger(__name__)
 
 vid_list = []
 
@@ -183,6 +182,7 @@ async def list_video(message: Message):
     & (
         filters.regex(r"^https://www.instagram.com/reel/*")
         | filters.regex(r"^https://www.instagram.com/tv/*")
+        | filters.regex(r"^https://www.instagram.com/p/*")
         | filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
         | filters.regex(r"^https://vm.tiktok.com/*")
@@ -212,8 +212,8 @@ async def video_dl(userge, message: Message):
                     await userge.send_video(chat_id, video=video_path, thumb=thumb_path)
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
-                except Exception as f_e:
-                    _LOG.exception(f_e)
+                except Exception as e:
+                    await CHANNEL.log(e)
                     await message.reply("**Link not supported or private.** 🥲")
                     del_link = False
                     continue
