@@ -1,5 +1,5 @@
 ### By Ryuk ###
-### Made By Modifying code from Kakashi's UX ###
+### Made By Modifying code from Kakashi's UX For chats database. ###
 
 import os
 import shutil
@@ -213,9 +213,31 @@ async def video_dl(userge, message: Message):
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
                 except Exception as e:
-                    await CHANNEL.log(str(e))
-                    await message.reply("**Link not supported or private.** 🥲")
-                    del_link = False
+                    if str(e).startswith("ERROR: [Instagram]"):
+                        await msg.edit(
+                            "Couldn't download video,\n`trying alternate method....`"
+                        )
+                        from pyrogram.errors import MediaEmpty, WebpageCurlFailed
+
+                        i_dl = await instadl(link)
+                        if i_dl == "not found":
+                            await message.reply(
+                                "Video download failed.\nLink not supported or private."
+                            )
+                        else:
+                            try:
+                                await message.reply_video(i_dl)
+                            except (MediaEmpty, WebpageCurlFailed):
+                                from wget import download
+
+                                x = await download(i_dl, "x.mp4")
+                                await message.reply_video(x)
+                                if os.path.exists(x):
+                                    os.remove(x)
+                    else:
+                        await Channel.log(str(e))
+                        await message.reply("**Link not supported or private.** 🥲")
+                        del_link = False
                     continue
         await msg.delete()
         if del_link or message.from_user.id == 1503856346:
@@ -231,6 +253,33 @@ async def _tubeDl(url, path):
     }
     x = yt_dlp.YoutubeDL(_opts)
     x.download(url)
+
+
+async def instadl(url):
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("start-maximised")
+        chrome_options.binary_location = Config.GOOGLE_CHROME_BIN
+        chrome_options.add_argument("ignore-certificate-errors")
+        chrome_options.add_argument("test-type")
+        chrome_options.add_argument("headless")
+        chrome_options.add_argument("no-sandbox")
+        chrome_options.add_argument("disable-dev-shm-usage")
+        chrome_options.add_argument("no-sandbox")
+        chrome_options.add_argument("disable-gpu")
+        driver = webdriver.Chrome(chrome_options=chrome_options)
+        driver.get(f"https://en.savefrom.net/258/#url={url}")
+        link = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#sf_result .info-box a"))
+        )
+        return link.get_attribute("href")
+    except BaseException:
+        return "not found"
 
 
 def full_name(user: dict):
