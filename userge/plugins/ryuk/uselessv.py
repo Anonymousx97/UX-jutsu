@@ -230,7 +230,7 @@ async def video_dl(userge, message: Message):
                             except (MediaEmpty, WebpageCurlFailed):
                                 from wget import download
 
-                                x = await download(i_dl, "x.mp4")
+                                x = download(i_dl, "x.mp4")
                                 await message.reply_video(x)
                                 if os.path.exists(x):
                                     os.remove(x)
