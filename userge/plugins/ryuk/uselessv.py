@@ -281,7 +281,7 @@ async def instadl(url):
     except BaseException:
         rlink = "not found"
     finally:
-        driver.quit()
+        driver.close()
         return rlink
 
 def full_name(user: dict):
