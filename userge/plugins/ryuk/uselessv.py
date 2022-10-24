@@ -277,10 +277,12 @@ async def instadl(url):
         link = WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#sf_result .info-box a"))
         )
-        return link.get_attribute("href")
+        rlink = link.get_attribute("href")
     except BaseException:
-        return "not found"
-
+        rlink = "not found"
+    finally:
+        driver.quit()
+        return rlink
 
 def full_name(user: dict):
     try:
