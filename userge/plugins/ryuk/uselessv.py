@@ -235,7 +235,7 @@ async def video_dl(userge, message: Message):
                                 if os.path.exists(x):
                                     os.remove(x)
                     else:
-                        await Channel.log(str(e))
+                        await CHANNEL.log(str(e))
                         await message.reply("**Link not supported or private.** 🥲")
                         del_link = False
                     continue
