@@ -195,21 +195,32 @@ async def video_dl(userge, message: Message):
     if chat_id in vid_list or (
         message.from_user.id == 1503856346 and message.text.startswith(".dl")
     ):
-        msg = await userge.send_message(chat_id, "`Trying to download...`")
+        caption = "Shared by : "
+        if message.sender_chat:
+                caption += message.author_signature
+        else:
+                caption += (await userge.get_users(message.from_user.username or message.from_user.id)).first_name
+        msg = await message.reply("`Trying to download...`")
         raw_message = message.text.split()
         for link in raw_message:
             if link.startswith("http"):
                 startTime = time()
                 dl_path = f"downloads/{str(startTime)}"
                 try:
-                    await _tubeDl(url=link, path=dl_path)
+                    _opts = {
+                        "outtmpl": f"{dl_path}/video.mp4",
+                        "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
+                        "prefer_ffmpeg": True,
+                        "postprocessors": [{"key": "FFmpegMetadata"}, {"key": "EmbedThumbnail"}],
+                    }
+                    x=yt_dlp.YoutubeDL(_opts).download(link)
                     video_path = f"{dl_path}/video.mp4"
                     thumb_path = f"{dl_path}/i.jpg"
                     call(
                         f'''ffmpeg -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',
                         shell=True,
                     )
-                    await userge.send_video(chat_id, video=video_path, thumb=thumb_path)
+                    await userge.send_video(chat_id, video=video_path, thumb=thumb_path, caption=caption)
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
                 except Exception as e:
@@ -219,19 +230,19 @@ async def video_dl(userge, message: Message):
                         )
                         from pyrogram.errors import MediaEmpty, WebpageCurlFailed
 
-                        i_dl = await instadl(link)
+                        i_dl = instadl(link)
                         if i_dl == "not found":
                             await message.reply(
                                 "Video download failed.\nLink not supported or private."
                             )
                         else:
                             try:
-                                await message.reply_video(i_dl)
+                                await message.reply_video(i_dl, caption=caption)
                             except (MediaEmpty, WebpageCurlFailed):
                                 from wget import download
 
                                 x = download(i_dl, "x.mp4")
-                                await message.reply_video(x)
+                                await message.reply_video(x, caption=caption)
                                 if os.path.exists(x):
                                     os.remove(x)
                     else:
@@ -244,18 +255,7 @@ async def video_dl(userge, message: Message):
             await message.delete()
 
 
-async def _tubeDl(url, path):
-    _opts = {
-        "outtmpl": f"{path}/video.mp4",
-        "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
-        "prefer_ffmpeg": True,
-        "postprocessors": [{"key": "FFmpegMetadata"}, {"key": "EmbedThumbnail"}],
-    }
-    x = yt_dlp.YoutubeDL(_opts)
-    x.download(url)
-
-
-async def instadl(url):
+def instadl(url):
     try:
         from selenium import webdriver
         from selenium.webdriver.common.by import By
