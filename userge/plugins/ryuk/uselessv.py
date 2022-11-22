@@ -178,13 +178,10 @@ async def list_video(message: Message):
 
 
 @userge.on_message(
-    ~filters.edited
-    & (
         filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
         | filters.regex(r"^https://vm.tiktok.com/*")
         | filters.regex(r"^\.dl")
-    )
 )
 async def video_dl(userge, message: Message):
     chat_id = message.chat.id
