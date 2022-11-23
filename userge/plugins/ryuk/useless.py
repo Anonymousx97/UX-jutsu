@@ -1,5 +1,5 @@
 from userge import Message, userge
-from pyrogram.errors import UsernameInvalid
+from pyrogram.errors import UsernameInvalid, InviteRequestSent
 
 
 @userge.on_cmd(
@@ -11,10 +11,10 @@ from pyrogram.errors import UsernameInvalid
 )
 async def jc(message: Message):
     reply = message.reply_to_message
-    link = reply.text if reply else message.input_str
+    link = reply.text or message.input_str
     if not link:
         await message.edit(
-            "```Bruh, Without chat link, I can't Join...^_^```", del_in=3
+            "Bruh, Without chat link, I can't Join...^_^", del_in=3
         )
         return
     try:
@@ -22,6 +22,8 @@ async def jc(message: Message):
     except UsernameInvalid:
         link = link.split("/")[-1]
         await userge.join_chat(link)
+    except InviteRequestSent:
+        return await message.reply("Join Request Sent.")
     return await message.reply("Joined")
 
 
@@ -44,5 +46,7 @@ async def clck(message: Message):
             await button.click(button_name)
         else:
             await button.click(0)
+    except ValueError:
+        return await message.reply("Button doesn't exists")
     except TimeoutError:
         return
