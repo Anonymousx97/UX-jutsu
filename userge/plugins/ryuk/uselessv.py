@@ -181,6 +181,7 @@ async def list_video(message: Message):
         filters.regex(r"https://twitter.com/*")
         | filters.regex(r"^https://youtube.com/shorts/*")
         | filters.regex(r"^https://vm.tiktok.com/*")
+        | filters.regex(r"^https://www.reddit.com/*")
         | filters.regex(r"^\.dl")
 )
 async def video_dl(userge, message: Message):
