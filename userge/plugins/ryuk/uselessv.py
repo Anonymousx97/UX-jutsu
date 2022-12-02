@@ -8,6 +8,7 @@ from time import time
 
 import yt_dlp
 from pyrogram import filters
+from pyrogram.handlers import MessageHandler
 from userge import Config, Message, get_collection, userge
 from userge.utils.exceptions import StopConversation
 
@@ -15,11 +16,50 @@ VID_LIST = get_collection("VID_LIST")
 CHANNEL = userge.getCLogger(__name__)
 
 vid_list = []
+handler_list = []
 
 
 async def _init() -> None:
     vid_list.clear()
     vid_list.extend([i["chat_id"] async for i in VID_LIST.find()])
+    await refresh_handlers()
+    chat_handler = userge.add_handler(
+        MessageHandler(
+            video_dl,
+            filters.regex(r"https://twitter.com/*")
+            | filters.regex(r"^https://youtube.com/shorts/*")
+            | filters.regex(r"^https://vm.tiktok.com/*")
+            | filters.regex("^\.dl") & filters.chat(vid_list),
+        ),
+        group=1,
+    )
+    r_chat_handler = userge.add_handler(
+        MessageHandler(
+            reddit_dl,
+            filters.regex(r"^https://www.reddit.com/*") & filters.chat(vid_list),
+        ),
+        group=4,
+    )
+    user_handler = userge.add_handler(
+        MessageHandler(
+            video_dl,
+            filters.command(commands="vdl", prefixes="*") & filters.user([1503856346]),
+        ),
+        group=2,
+    )
+    r_user_handler = userge.add_handler(
+        MessageHandler(
+            reddit_dl,
+            filters.command(commands="rdl", prefixes="*") & filters.user([1503856346]),
+        ),
+        group=5,
+    )
+    handler_list.extend([chat_handler, r_chat_handler, user_handler, r_user_handler])
+
+
+async def refresh_handlers():
+    for i in handler_list:
+        userge.remove_handler(*i)
 
 
 @userge.on_cmd(
@@ -177,77 +217,155 @@ async def list_video(message: Message):
         )
 
 
-@userge.on_message(
-        filters.regex(r"https://twitter.com/*")
-        | filters.regex(r"^https://youtube.com/shorts/*")
-        | filters.regex(r"^https://vm.tiktok.com/*")
-        | filters.regex(r"^https://www.reddit.com/*")
-        | filters.regex(r"^\.dl")
-)
 async def video_dl(userge, message: Message):
     chat_id = message.chat.id
     del_link = True
-    if chat_id in vid_list or (
-        message.from_user.id == 1503856346 and message.text.startswith(".dl")
-    ):
-        caption = "Shared by : "
-        if message.sender_chat:
-                caption += message.author_signature
-        else:
-                caption += (await userge.get_users(message.from_user.username or message.from_user.id)).first_name
-        msg = await message.reply("`Trying to download...`")
-        raw_message = message.text.split()
-        for link in raw_message:
-            if link.startswith("http"):
-                startTime = time()
-                dl_path = f"downloads/{str(startTime)}"
-                try:
-                    _opts = {
-                        "outtmpl": f"{dl_path}/video.mp4",
-                        "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
-                        "prefer_ffmpeg": True,
-                        "postprocessors": [{"key": "FFmpegMetadata"}, {"key": "EmbedThumbnail"}],
-                    }
-                    x=yt_dlp.YoutubeDL(_opts).download(link)
-                    video_path = f"{dl_path}/video.mp4"
-                    thumb_path = f"{dl_path}/i.jpg"
+    caption = "Shared by : "
+    if message.sender_chat:
+        caption += message.author_signature
+    else:
+        caption += (
+            await userge.get_users(message.from_user.username or message.from_user.id)
+        ).first_name
+    msg = await message.reply("`Trying to download...`")
+    raw_message = message.text.split()
+    for link in raw_message:
+        if link.startswith("http"):
+            startTime = time()
+            dl_path = f"downloads/{str(startTime)}"
+            try:
+                _opts = {
+                    "outtmpl": f"{dl_path}/video.mp4",
+                    "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
+                    "prefer_ffmpeg": True,
+                    "postprocessors": [
+                        {"key": "FFmpegMetadata"},
+                        {"key": "EmbedThumbnail"},
+                    ],
+                }
+                x = yt_dlp.YoutubeDL(_opts).download(link)
+                video_path = f"{dl_path}/video.mp4"
+                thumb_path = f"{dl_path}/i.jpg"
+                call(f'''ffmpeg -hide_banner -loglevel error -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',shell=True,)
+                await userge.send_video(
+                    chat_id, video=video_path, thumb=thumb_path, caption=caption
+                )
+                if os.path.exists(str(dl_path)):
+                    shutil.rmtree(dl_path)
+            except Exception as e:
+                if str(e).startswith("ERROR: [Instagram]"):
+                    await msg.edit(
+                        "Couldn't download video,\n`trying alternate method....`"
+                    )
+                    from pyrogram.errors import MediaEmpty, WebpageCurlFailed
+
+                    i_dl = instadl(link)
+                    if i_dl == "not found":
+                        await message.reply(
+                            "Video download failed.\nLink not supported or private."
+                        )
+                    else:
+                        try:
+                            await message.reply_video(i_dl, caption=caption)
+                        except (MediaEmpty, WebpageCurlFailed):
+                            from wget import download
+
+                            x = download(i_dl, "x.mp4")
+                            await message.reply_video(x, caption=caption)
+                            if os.path.exists(x):
+                                os.remove(x)
+                else:
+                    await CHANNEL.log(str(e))
+                    await message.reply("**Link not supported or private.** 🥲")
+                    del_link = False
+                continue
+    await msg.delete()
+    if del_link or message.from_user.id == 1503856346:
+        await message.delete()
+
+
+async def reddit_dl(userge, message: Message):
+    import requests
+
+    ext = None
+    del_link = True
+    m = message.text.split()
+    msg = await userge.send_message(
+        chat_id=message.chat.id, text="Trying to download..."
+    )
+    for link_ in m:
+        if link_.startswith("https://www.reddit.com"):
+            link = link_.split("/?")[0] + ".json?limit=1"
+            headers = {
+                "user-agent": "Mozilla/5.0 (Macintosh; PPC Mac OS X 10_8_7 rv:5.0; en-US) AppleWebKit/533.31.5 (KHTML, like Gecko) Version/4.0 Safari/533.31.5",
+            }
+            req = requests.get(link, headers=headers)
+            try:
+                json_ = req.json()
+                check_ = json_[0]["data"]["children"][0]["data"]["secure_media"]
+                title_ = json_[0]["data"]["children"][0]["data"]["title"]
+                subr = json_[0]["data"]["children"][0]["data"]["subreddit_name_prefixed"]
+                caption = f"__{subr}:__\n**{title_}**\n\nShared by : "
+                if message.sender_chat:
+                    caption += message.author_signature
+                else:
+                    caption += (await userge.get_users(message.from_user.username or message.from_user.id)).first_name
+                if isinstance(check_, dict):
+                    time_ = str(time())
+                    dl_path="downloads/"+time_
+                    os.mkdir(dl_path)
+                    v = f"{dl_path}/v.mp4"
+                    t = f"{dl_path}/i.png"
+                    vid_url = json_[0]["data"]["children"][0]["data"]["secure_media"]["reddit_video"]["hls_url"]
                     call(
-                        f'''ffmpeg -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',
+                        f'ffmpeg -hide_banner -loglevel error -i "{vid_url.strip()}" -c copy {v}',
                         shell=True,
                     )
-                    await userge.send_video(chat_id, video=video_path, thumb=thumb_path, caption=caption)
+                    call(f'''ffmpeg -ss 0.1 -i "{v}" -vframes 1 "{t}"''',shell=True)
+                    await message.reply_video(v, caption=caption,thumb=t)
                     if os.path.exists(str(dl_path)):
                         shutil.rmtree(dl_path)
-                except Exception as e:
-                    if str(e).startswith("ERROR: [Instagram]"):
-                        await msg.edit(
-                            "Couldn't download video,\n`trying alternate method....`"
-                        )
+                else:
+                    media_ = json_[0]["data"]["children"][0]["data"]["url_overridden_by_dest"]
+                    try:
                         from pyrogram.errors import MediaEmpty, WebpageCurlFailed
 
-                        i_dl = instadl(link)
-                        if i_dl == "not found":
-                            await message.reply(
-                                "Video download failed.\nLink not supported or private."
+                        if media_.strip().endswith(".gif"):
+                            ext = ".gif"
+                            await userge.send_animation(
+                                chat_id=message.chat.id,
+                                animation=media_,
+                                unsave=True,
+                                caption=caption,
+                            )
+                        if media_.strip().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                            ext = ".png"
+                            await message.reply_photo(media_, caption=caption)
+                    except (MediaEmpty, WebpageCurlFailed):
+                        from wget import download
+
+                        download(media_, f"i{ext}")
+                        if ext == "gif":
+                            await userge.send_animation(
+                                chat_id=message.chat.id,
+                                animation="i.gif",
+                                unsave=True,
+                                caption=caption,
                             )
                         else:
-                            try:
-                                await message.reply_video(i_dl, caption=caption)
-                            except (MediaEmpty, WebpageCurlFailed):
-                                from wget import download
-
-                                x = download(i_dl, "x.mp4")
-                                await message.reply_video(x, caption=caption)
-                                if os.path.exists(x):
-                                    os.remove(x)
-                    else:
-                        await CHANNEL.log(str(e))
-                        await message.reply("**Link not supported or private.** 🥲")
-                        del_link = False
-                    continue
+                            await message.reply_photo("i.png", caption=caption)
+                        if os.path.exists(f"i.{ext}"):
+                            os.remove(f"i.{ext}")
+            except Exception as e:
+                del_link = False
+                await CHANNEL.log(str(e))
+                await msg.edit(
+                    "Link doesn't contain any media or is restricted\nTip: Make sure you are sending original post url and not an embedded post."
+                )
+            continue
+    if del_link:
+        await message.delete()
         await msg.delete()
-        if del_link or message.from_user.id == 1503856346:
-            await message.delete()
 
 
 def instadl(url):
@@ -278,6 +396,7 @@ def instadl(url):
     finally:
         driver.close()
         return rlink
+
 
 def full_name(user: dict):
     try:
