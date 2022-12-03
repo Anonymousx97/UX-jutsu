@@ -26,17 +26,17 @@ async def _init() -> None:
     chat_handler = userge.add_handler(
         MessageHandler(
             video_dl,
-            filters.regex(r"https://twitter.com/*")
+            (filters.regex(r"https://twitter.com/*")
             | filters.regex(r"^https://youtube.com/shorts/*")
             | filters.regex(r"^https://vm.tiktok.com/*")
-            | filters.regex("^\.dl") & filters.chat(vid_list),
+            | filters.regex("^\.dl")) & filters.chat(vid_list),
         ),
         group=1,
     )
     r_chat_handler = userge.add_handler(
         MessageHandler(
-            reddit_dl,
-            filters.regex(r"^https://www.reddit.com/*") & filters.chat(vid_list),
+            reddit_dl,(
+            filters.regex(r"^https://www.reddit.com/*") & filters.chat(vid_list)),
         ),
         group=4,
     )
