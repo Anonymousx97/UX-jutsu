@@ -259,7 +259,7 @@ async def video_dl(userge, message: Message):
                     )
                     from pyrogram.errors import MediaEmpty, WebpageCurlFailed
 
-                    i_dl = instadl(link)
+                    i_dl = await instadl(link)
                     if i_dl == "not found":
                         await message.reply(
                             "Video download failed.\nLink not supported or private."
@@ -368,7 +368,7 @@ async def reddit_dl(userge, message: Message):
         await msg.delete()
 
 
-def instadl(url):
+async def instadl(url):
     try:
         from selenium import webdriver
         from selenium.webdriver.common.by import By
