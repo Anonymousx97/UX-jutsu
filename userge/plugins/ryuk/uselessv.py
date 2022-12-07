@@ -5,6 +5,7 @@ import os
 import shutil
 from subprocess import call
 from time import time
+import traceback
 
 import yt_dlp
 from pyrogram import filters
@@ -275,7 +276,7 @@ async def video_dl(userge, message: Message):
                             if os.path.exists(x):
                                 os.remove(x)
                 else:
-                    await CHANNEL.log(str(e))
+                    await CHANNEL.log(str(traceback.format_exc()))
                     await message.reply("**Link not supported or private.** 🥲")
                     del_link = False
                 continue
@@ -316,15 +317,19 @@ async def reddit_dl(userge, message: Message):
                     os.mkdir(dl_path)
                     v = f"{dl_path}/v.mp4"
                     t = f"{dl_path}/i.png"
-                    vid_url = json_[0]["data"]["children"][0]["data"]["secure_media"]["reddit_video"]["hls_url"]
-                    call(
-                        f'ffmpeg -hide_banner -loglevel error -i "{vid_url.strip()}" -c copy {v}',
-                        shell=True,
-                    )
-                    call(f'''ffmpeg -ss 0.1 -i "{v}" -vframes 1 "{t}"''',shell=True)
-                    await message.reply_video(v, caption=caption,thumb=t)
-                    if os.path.exists(str(dl_path)):
-                        shutil.rmtree(dl_path)
+                    if "oembed" in check_:
+                        vid_url = json_[0]["data"]["children"][0]["data"]["preview"]["reddit_video_preview"]["fallback_url"]
+                        await userge.send_animation(chat_id=message.chat.id, animation=vid_url,unsave=True, caption=caption)
+                    else:
+                        vid_url = json_[0]["data"]["children"][0]["data"]["secure_media"]["reddit_video"]["hls_url"]
+                        call(
+                            f'ffmpeg -hide_banner -loglevel error -i "{vid_url.strip()}" -c copy {v}',
+                            shell=True,
+                        )
+                        call(f'''ffmpeg -ss 0.1 -i "{v}" -vframes 1 "{t}"''',shell=True)
+                        await message.reply_video(v, caption=caption,thumb=t)
+                        if os.path.exists(str(dl_path)):
+                            shutil.rmtree(dl_path)
                 else:
                     media_ = json_[0]["data"]["children"][0]["data"]["url_overridden_by_dest"]
                     try:
@@ -358,7 +363,7 @@ async def reddit_dl(userge, message: Message):
                             os.remove(f"i.{ext}")
             except Exception as e:
                 del_link = False
-                await CHANNEL.log(str(e))
+                await CHANNEL.log(str(traceback.format_exc()))
                 await msg.edit(
                     "Link doesn't contain any media or is restricted\nTip: Make sure you are sending original post url and not an embedded post."
                 )
