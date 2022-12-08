@@ -260,8 +260,6 @@ async def video_dl(userge, message: Message):
                         "Couldn't download video,\n`trying alternate method....`"
                     )
                     from pyrogram.errors import MediaEmpty, WebpageCurlFailed
-                    from concurrent.futures import ThreadPoolExecutor
-                    loop = asyncio.get_event_loop()
                     i_dl = await asyncio.to_thread(instadl,link)
                     if i_dl == "not found":
                         await message.reply(
