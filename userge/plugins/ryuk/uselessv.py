@@ -263,7 +263,7 @@ async def video_dl(userge, message: Message):
                     from pyrogram.errors import MediaEmpty, WebpageCurlFailed
                     from concurrent.futures import ThreadPoolExecutor
                     loop = asyncio.get_event_loop()
-                    i_dl = await loop.run_in_executor(ThreadPoolExecutor(),instadl,link))
+                    i_dl = await loop.run_in_executor(ThreadPoolExecutor(),instadl,link)
                     if s_url[0] == "not found":
                         await message.reply(
                             "Video download failed.\nLink not supported or private."
