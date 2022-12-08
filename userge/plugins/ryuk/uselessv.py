@@ -283,7 +283,7 @@ async def video_dl(userge, message: Message):
     await msg.delete()
     if del_link or message.from_user.id == 1503856346:
         await message.delete()
-        s_url.clear()
+
 
 async def reddit_dl(userge, message: Message):
     import requests
