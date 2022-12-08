@@ -375,7 +375,7 @@ async def reddit_dl(userge, message: Message):
         await msg.delete()
 
 
-def instadl(str:url):
+def instadl(url:str):
     try:
         from selenium import webdriver
         from selenium.webdriver.common.by import By
