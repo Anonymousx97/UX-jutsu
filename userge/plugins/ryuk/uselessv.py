@@ -20,6 +20,7 @@ CHANNEL = userge.getCLogger(__name__)
 vid_list = []
 handler_list = []
 
+s_url=[]
 
 async def _init() -> None:
     vid_list.clear()
@@ -262,14 +263,14 @@ async def video_dl(userge, message: Message):
                     from pyrogram.errors import MediaEmpty, WebpageCurlFailed
                     from concurrent.futures import ThreadPoolExecutor
                     loop = asyncio.get_event_loop()
-                    i_dl = await loop.run_in_executor(ThreadPoolExecutor.map(instadl,link))
-                    if i_dl == "not found":
+                    i_dl = await loop.run_in_executor(ThreadPoolExecutor(),instadl,link))
+                    if s_url[0] == "not found":
                         await message.reply(
                             "Video download failed.\nLink not supported or private."
                         )
                     else:
                         try:
-                            await message.reply_video(i_dl, caption=caption)
+                            await message.reply_video(s_url[0], caption=caption)
                         except (MediaEmpty, WebpageCurlFailed):
                             from wget import download
 
@@ -285,7 +286,7 @@ async def video_dl(userge, message: Message):
     await msg.delete()
     if del_link or message.from_user.id == 1503856346:
         await message.delete()
-
+        s_url.clear()
 
 async def reddit_dl(userge, message: Message):
     import requests
@@ -402,7 +403,7 @@ def instadl(url:str):
         rlink = "not found"
     finally:
         driver.close()
-        return rlink
+        s_url.append(rlink)
 
 
 def full_name(user: dict):
