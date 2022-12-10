@@ -8,4 +8,4 @@ def read_root():
 
 @app.get("/h")
 def read_h():
-    return "working"
+    return "healthy"
