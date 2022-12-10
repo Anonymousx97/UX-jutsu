@@ -45,14 +45,14 @@ async def _init() -> None:
     user_handler = userge.add_handler(
         MessageHandler(
             video_dl,
-            filters.command(commands="vdl", prefixes="*") & filters.user([1503856346]),
+            filters.command(commands="vdl", prefixes=Config.SUDO_TRIGGER) & filters.user([1503856346]),
         ),
         group=2,
     )
     r_user_handler = userge.add_handler(
         MessageHandler(
             reddit_dl,
-            filters.command(commands="rdl", prefixes="*") & filters.user([1503856346]),
+            filters.command(commands="rdl", prefixes=Config.SUDO_TRIGGER) & filters.user([1503856346]),
         ),
         group=5,
     )
