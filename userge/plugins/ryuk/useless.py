@@ -1,5 +1,5 @@
 from userge import Message, userge
-from pyrogram.errors import UsernameInvalid, InviteRequestSent
+from pyrogram.errors import UsernameInvalid
 
 
 @userge.on_cmd(
@@ -22,8 +22,9 @@ async def jc(message: Message):
     except UsernameInvalid:
         link = link.split("/")[-1]
         await userge.join_chat(link)
-    except InviteRequestSent:
-        return await message.reply("Join Request Sent.")
+    except Exception as e:
+        if str(e).startswith("Telegram says: [400 Bad Request] - [400 INVITE_REQUEST_SENT]"):
+            return await message.reply("Join Request Sent.")
     return await message.reply("Joined")
 
 
