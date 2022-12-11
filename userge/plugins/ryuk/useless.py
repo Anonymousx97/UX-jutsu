@@ -41,7 +41,7 @@ async def clck(message: Message):
     button_name = message.input_str
     button = message.reply_to_message
     if not button:
-        await message.edit("Reply to a button -__-", del_in=5)
+        return await message.edit("Reply to a button -_-", del_in=5)
     try:
         if button_name:
             await button.click(button_name)
