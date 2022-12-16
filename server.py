@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 import uvicorn
 import asyncio
-
+import os
 
 app = FastAPI()
 
 @app.get("/")
 async def read_root():
-    return "healthy"
+    return "website is healthy."
 
-if __name__=="__main__":
+api_port=os.environ.get("API_PORT")
+
+if __name__=="__main__" and api_port:
     print("starting uvicorn")
-    uvicorn.run(app,workers=1,host ="0.0.0.0" ,port=10000,log_level="error")
+    uvicorn.run(app,workers=1,host ="0.0.0.0" ,port=api_port,log_level="error")
