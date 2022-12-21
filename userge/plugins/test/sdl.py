@@ -18,11 +18,11 @@ LOGGER = userge.getLogger(__name__)
 
 
 @userge.on_cmd(
-    "sdl",
+    "mirror",
     about={
         "header": "Download files to server",
-        "usage": "{tr}download [url | reply to telegram media]",
-        "examples": "{tr}download https://speed.hetzner.de/100MB.bin | testing upload.bin",
+        "usage": "{tr}mirror [url | reply to telegram media]",
+        "examples": "{tr}mirror https://speed.hetzner.de/100MB.bin | testing upload.bin. Found file here https://billouetaudrey.site/mirror/",
     },
     check_downpath=True,
 )
