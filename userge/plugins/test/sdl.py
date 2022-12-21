@@ -137,5 +137,5 @@ async def tg_download(message: Message, to_download: Message) -> Tuple[str, int]
         raise ProcessCanceled
     if not isinstance(dl_loc, str):
         raise TypeError("File Corrupted!")
-    dl_loc = os.path.join("/mnt/NAS/Docker/UB/shared", os.path.basename(dl_loc))
+    dl_loc = os.path.join("/mnt/OctaviOS", os.path.basename(dl_loc))
     return dl_loc, (datetime.now() - start_t).seconds
