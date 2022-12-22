@@ -239,19 +239,15 @@ async def video_dl(userge, message: Message):
                 _opts = {
                     "outtmpl": f"{dl_path}/video.mp4",
                     "format": "bv[ext=mp4]+ba[ext=m4a]/b[ext=mp4]",
-                    "prefer_ffmpeg": True,
-                    "postprocessors": [
-                        {"key": "FFmpegMetadata"},
-                        {"key": "EmbedThumbnail"},
-                    ],
                 }
                 x = yt_dlp.YoutubeDL(_opts).download(link)
                 video_path = f"{dl_path}/video.mp4"
                 thumb_path = f"{dl_path}/i.jpg"
-                call(f'''ffmpeg -hide_banner -loglevel error -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',shell=True,)
-                await userge.send_video(
-                    chat_id, video=video_path, thumb=thumb_path, caption=caption,reply_to_message_id=message.reply_to_message.message_id if message.reply_to_message else None,
-                )
+                if os.path.isfile(video_path):
+                    call(f'''ffmpeg -hide_banner -loglevel error -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',shell=True,)
+                    await userge.send_video(
+                        chat_id, video=video_path, thumb=thumb_path, caption=caption,reply_to_message_id=message.reply_to_message.message_id if message.reply_to_message else None,
+                    )
                 if os.path.exists(str(dl_path)):
                     shutil.rmtree(dl_path)
             except Exception as e:
@@ -273,11 +269,11 @@ async def video_dl(userge, message: Message):
 
                             x = download(i_dl, "x.mp4")
                             await message.reply_video(x, caption=caption)
-                            if os.path.exists(x):
+                            if os.path.isfile(x):
                                 os.remove(x)
                 else:
                     await CHANNEL.log(str(traceback.format_exc()))
-                    await message.reply("**Link not supported or private.** 🥲")
+                    await message.reply("Link not supported or private.")
                     del_link = False
                 continue
     await msg.delete()
@@ -392,7 +388,7 @@ def instadl(url:str):
         chrome_options.add_argument("disable-gpu")
         driver = webdriver.Chrome(chrome_options=chrome_options)
         driver.get(f"https://en.savefrom.net/258/#url={url}")
-        link = WebDriverWait(driver, 30).until(
+        link = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#sf_result .info-box a"))
         )
         rlink = link.get_attribute("href")
