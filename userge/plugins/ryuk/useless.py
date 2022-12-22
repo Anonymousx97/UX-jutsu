@@ -11,7 +11,7 @@ from pyrogram.errors import UsernameInvalid
 )
 async def jc(message: Message):
     reply = message.reply_to_message
-    link = reply.text or message.input_str
+    link = message.input_str or reply.text
     if not link:
         await message.edit(
             "Bruh, Without chat link, I can't Join...^_^", del_in=3
