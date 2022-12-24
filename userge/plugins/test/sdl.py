@@ -64,7 +64,7 @@ async def url_download(message: Message, url: str) -> Tuple[str, int]:
         url = url.strip()
         if c_file_name:
             custom_file_name = c_file_name.strip()
-    dl_loc = os.path.join("/mnt/OctaviOS", custom_file_name)
+    dl_loc = os.path.join("/mnt/UB", custom_file_name)
     downloader = SmartDL(url, dl_loc, progress_bar=False)
     downloader.start(blocking=False)
     count = 0
@@ -122,10 +122,10 @@ async def tg_download(message: Message, to_download: Message) -> Tuple[str, int]
     """download from tg file"""
     await message.edit("`Downloading From TG...`")
     start_t = datetime.now()
-    custom_file_name = "/mnt/OctaviOSf"
+    custom_file_name = "/mnt/UB"
     if message.filtered_input_str:
         custom_file_name = os.path.join(
-            "/mnt/OctaviOS", message.filtered_input_str.strip()
+            "/mnt/UB", message.filtered_input_str.strip()
         )
     dl_loc = await message.client.download_media(
         message=to_download,
@@ -137,5 +137,5 @@ async def tg_download(message: Message, to_download: Message) -> Tuple[str, int]
         raise ProcessCanceled
     if not isinstance(dl_loc, str):
         raise TypeError("File Corrupted!")
-    dl_loc = os.path.join("/mnt/OctaviOS", os.path.basename(dl_loc))
+    dl_loc = os.path.join("/mnt/UB", os.path.basename(dl_loc))
     return dl_loc, (datetime.now() - start_t).seconds
