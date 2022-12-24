@@ -22,7 +22,7 @@ LOGGER = userge.getLogger(__name__)
     about={
         "header": "Download files to server",
         "usage": "{tr}octavios [url | reply to telegram media]",
-        "examples": "{tr}mirror https://speed.hetzner.de/100MB.bin | testing upload.bin. Found file here https://billouetaudrey.site/octavios/",
+        "examples": "{tr}octavios https://speed.hetzner.de/100MB.bin | testing upload.bin. Found file here https://billouetaudrey.site/octavios/",
     },
     check_downpath=True,
 )
