@@ -246,7 +246,7 @@ async def video_dl(userge, message: Message):
                 if os.path.isfile(video_path):
                     call(f'''ffmpeg -hide_banner -loglevel error -ss 0.1 -i "{video_path}" -vframes 1 "{thumb_path}"''',shell=True,)
                     await userge.send_video(
-                        chat_id, video=video_path, thumb=thumb_path, caption=caption,reply_to_message_id=message.reply_to_message.message_id if message.reply_to_message else None,
+                        chat_id, video=video_path, thumb=thumb_path if os.path.isfile(thumb_path) else None, caption=caption,reply_to_message_id=message.reply_to_message.message_id if message.reply_to_message else None,
                     )
                 if os.path.exists(str(dl_path)):
                     shutil.rmtree(dl_path)
