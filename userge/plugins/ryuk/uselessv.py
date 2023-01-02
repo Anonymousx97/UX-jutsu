@@ -277,7 +277,7 @@ async def video_dl(userge, message: Message):
                     del_link = False
                 continue
     await msg.delete()
-    if del_link or message.from_user.id == 1503856346:
+    if del_link:
         await message.delete()
 
 
