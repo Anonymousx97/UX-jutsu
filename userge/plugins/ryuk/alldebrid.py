@@ -7,6 +7,7 @@ from userge import Message, userge
 
 # Your Alldbrid App token
 KEY = os.environ.get("DEBRID_TOKEN")
+WEBDAV = os.environ.get("WEBDAV_URL")
 
 # Get response from api and return json or the error
 async def get_json(endpoint: str, query: dict):
@@ -111,5 +112,5 @@ async def torrents(message: Message):
             if status == "Downloading":
                 ret_val += f"""__{round(int(i.get("downloaded",0))/1000000)}__/"""
             ret_val += f"""__{round(int(i.get("size",0))/1000000)}__ mb"""
-        ret_val += "\n\nSite: https://billouetaudrey.site/alldebrid/magnets/"
+        ret_val += "\n\nSite: https://billouetaudrey.site/alldebrid/magnets/\n\nWebDav : {WEBDAV}"
     await message.reply(ret_val)
