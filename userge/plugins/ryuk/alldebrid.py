@@ -98,6 +98,7 @@ async def torrents(message: Message):
             ret_val += f"""__{round(int(data.get("downloaded",0))/1000000)}__/"""
         ret_val += f"""__{round(int(data.get("size",0))/1000000)}__ mb"""
         ret_val += "\n\nSite: https://billouetaudrey.site/alldebrid/magnets/"
+        ret_val += "\n\nSite: https://myfiles.alldebrid.com/"DEBRID_WEBDAV"/magnets/"
     else:
         ret_val = ""
         limit = 5
