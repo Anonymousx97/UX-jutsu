@@ -38,38 +38,45 @@ async def get_json(endpoint: str, query: dict):
     },
 )
 async def debrid(message: Message):
-    link = message.filtered_input_str
-    if link.startswith("http"):
-        if "-save" not in message.flags:
-            endpoint = "/link/unlock"
-            query = {"link": link}
-            d_link = WEB_HISTORY
+    link_ = message.filtered_input_str
+    if not link_:
+        return await message.reply("Give a magnet or link to unrestrict.",quote=True)
+    for i in link_.split():
+        link = i
+        if link.startswith("http"):
+            if "-save" not in message.flags:
+                endpoint = "/link/unlock"
+                query = {"link": link}
+                d_link = WEB_HISTORY
+            else:
+                endpoint = "/user/links/save"
+                query = {"links[]": link}
+                d_link = WEB_LINK
         else:
-            endpoint = "/link/save"
-            query = {"links[]": link}
-            d_link = WEB_LINK
-    else:
-        endpoint = "/magnet/upload"
-        query = {"magnets[]": link}
-        d_link = WEB_TORRENT
-    unrestrict = await get_json(endpoint=endpoint, query=query)
-    if not isinstance(unrestrict, dict) or "error" in unrestrict:
-        return await message.reply(unrestrict)
-    if not link.startswith("http"):
-        data = unrestrict["data"]["magnets"][0]
-        name_ = data.get("name")
-        id_ = data.get("id")
-        size_ = round(int(data.get("size", 0)) / 1000000)
-        ready_ = data.get("ready")
-    else:
-        data = unrestrict["data"]
-        name_ = data.get("filename")
-        id_ = data.get("id")
-        size_ = round(int(data.get("filesize", 0)) / 1000000)
-        ready_ = data.get("ready", "True")
-        d_link = d_link + name_ if d_link else ""
-    ret_str = f"Name: **{name_}**\nID: `{id_}`\nSize: **{size_} mb**\nReady: __{ready_}__\nLink: {d_link}"
-    await message.reply(ret_str)
+            endpoint = "/magnet/upload"
+            query = {"magnets[]": link}
+            d_link = WEB_TORRENT
+        unrestrict = await get_json(endpoint=endpoint, query=query)
+        if not isinstance(unrestrict, dict) or "error" in unrestrict:
+            return await message.reply(unrestrict, quote=True)
+        if "-save" in message.flags:
+            await message.reply("Link Successfully Saved.", quote=True)
+        else:
+            if not link.startswith("http"):
+                data = unrestrict["data"]["magnets"][0]
+                name_ = data.get("name")
+                id_ = data.get("id")
+                size_ = round(int(data.get("size", 0)) / 1000000)
+                ready_ = data.get("ready")
+            else:
+                data = unrestrict["data"]
+                name_ = data.get("filename")
+                id_ = data.get("id")
+                size_ = round(int(data.get("filesize", 0)) / 1000000)
+                ready_ = data.get("ready", "True")
+                d_link = d_link + name_ if d_link else ""
+            ret_str = f"Name: **{name_}**\nID: `{id_}`\nSize: **{size_} mb**\nReady: __{ready_}__\nLink: {d_link.replace(" ","%20")}"
+            await message.reply(ret_str, quote=True)
 
 # Get Status via id or Last 5 torrents 
 @userge.on_cmd(
@@ -87,15 +94,15 @@ async def torrents(message: Message):
     endpoint = "/magnet/status"
     query = {}
     if "-s" in message.flags and "-l" in message.flags:
-        return await message.reply("can't use two flags at once")
+        return await message.reply("can't use two flags at once", quote=True)
     if "-s" in message.flags:
         input_ = message.filtered_input_str
         if not input_:
-            return await message.reply("ID required with -s flag")
+            return await message.reply("ID required with -s flag", quote=True)
         query = {"id": input_}
     json = await get_json(endpoint=endpoint, query=query)
     if not isinstance(json, dict) or "error" in json:
-        return await message.reply(json)
+        return await message.reply(json, quote=True)
     data = json["data"]["magnets"]
     if not isinstance(data, list):
         status = data.get("status")
@@ -118,4 +125,4 @@ async def torrents(message: Message):
                 ret_val += f"""__{round(int(i.get("downloaded",0))/1000000)}__/"""
             ret_val += f"""__{round(int(i.get("size",0))/1000000)}__ mb"""
         ret_val += f"\n\nSite: {WEB_TORRENT}\n\nWebDav : {WEBDAV}" if WEBDAV and WEB_TORRENT else ""
-    await message.reply(ret_val)
+    await message.reply(ret_val, quote=True)
