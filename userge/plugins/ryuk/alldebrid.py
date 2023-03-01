@@ -75,7 +75,7 @@ async def debrid(message: Message):
                 size_ = round(int(data.get("filesize", 0)) / 1000000)
                 ready_ = data.get("ready", "True")
                 d_link = d_link + name_ if d_link else ""
-            ret_str = f"Name: **{name_}**\nID: `{id_}`\nSize: **{size_} mb**\nReady: __{ready_}__\nLink: {d_link.replace(" ","%20")}"
+            ret_str = f"""Name: **{name_}**\nID: `{id_}`\nSize: **{size_} mb**\nReady: __{ready_}__\nLink: {d_link.replace(" ","%20")}"""
             await message.reply(ret_str, quote=True)
 
 # Get Status via id or Last 5 torrents 
