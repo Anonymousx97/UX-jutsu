@@ -14,6 +14,7 @@ WEB_TORRENT = os.environ.get("WEB_TORRENT")
 WEB_LINK = os.environ.get("WEB_LINK")
 WEB_HISTORY = os.environ.get("WEB_HISTORY")
 
+
 # Get response from api and return json or the error
 async def get_json(endpoint: str, query: dict):
     if not KEY:
@@ -28,6 +29,7 @@ async def get_json(endpoint: str, query: dict):
             except Exception as e:
                 return str(e)
 
+
 # Unlock Links or magnets
 @userge.on_cmd(
     "unrestrict",
@@ -38,8 +40,7 @@ async def get_json(endpoint: str, query: dict):
     },
 )
 async def debrid(message: Message):
-    link_ = message.filtered_input_str
-    if not link_:
+    if not ( link_ := message.filtered_input_str ):
         return await message.reply("Give a magnet or link to unrestrict.",quote=True)
     for i in link_.split():
         link = i
@@ -78,7 +79,8 @@ async def debrid(message: Message):
             ret_str = f"""Name: **{name_}**\nID: `{id_}`\nSize: **{size_} mb**\nReady: __{ready_}__\nLink: {d_link.replace(" ","%20")}"""
             await message.reply(ret_str, quote=True)
 
-# Get Status via id or Last 5 torrents 
+
+# Get Status via id or Last 5 torrents
 @userge.on_cmd(
     "torrents",
     about={
@@ -96,8 +98,7 @@ async def torrents(message: Message):
     if "-s" in message.flags and "-l" in message.flags:
         return await message.reply("can't use two flags at once", quote=True)
     if "-s" in message.flags:
-        input_ = message.filtered_input_str
-        if not input_:
+        if not ( input_ := message.filtered_input_str ) :
             return await message.reply("ID required with -s flag", quote=True)
         query = {"id": input_}
     json = await get_json(endpoint=endpoint, query=query)
@@ -106,10 +107,16 @@ async def torrents(message: Message):
     data = json["data"]["magnets"]
     if not isinstance(data, list):
         status = data.get("status")
-        ret_val = f"""\n\n**Name**: __{data.get("filename")}__\nStatus: __{status}__\nSize: """
+        ret_val = f"""
+\n**Name**: __{data.get("filename")}__
+Status: __{status}__
+ID: ```{data.get("id")}```
+Size: """
         if status == "Downloading":
             ret_val += f"""__{round(int(data.get("downloaded",0))/1000000)}__/"""
         ret_val += f"""__{round(int(data.get("size",0))/1000000)}__ mb"""
+        if (link := data.get("links")):
+                ret_val += "\n__UptoBox__: \n[ " + "\n".join([ f"""<a href={z.get("link","")}>{z.get("filename","")}</a>""" for z in link]) + " ]"
         ret_val += f"\n\nSite: {WEB_TORRENT}" if WEB_TORRENT else ""
     else:
         ret_val = ""
@@ -118,11 +125,27 @@ async def torrents(message: Message):
             limit = int(message.filtered_input_str)
         for i in data[0:limit]:
             status = i.get("status")
-            ret_val += (
-                f"""\n\nName: __{i.get("filename")}__\nStatus: __{status}__\nSize: """
-            )
+            ret_val += f"""
+\nName: __{i.get("filename")}__
+Status: __{status}__
+ID: ```{i.get("id")}```
+Size: """
             if status == "Downloading":
                 ret_val += f"""__{round(int(i.get("downloaded",0))/1000000)}__/"""
             ret_val += f"""__{round(int(i.get("size",0))/1000000)}__ mb"""
+            if (link := i.get("links")):
+                ret_val += "\n__UptoBox__: \n[ " + "\n".join([ f"""<a href={z.get("link","")}>{z.get("filename","")}</a>""" for z in link]) + " ]"
         ret_val += f"\n\nSite: {WEB_TORRENT}\n\nWebDav : {WEBDAV}" if WEBDAV and WEB_TORRENT else ""
     await message.reply(ret_val, quote=True)
+
+
+
+# Delete a Magnet
+@userge.on_cmd("del_t",about={"header":"Delete the previously unrestricted Torrent","usage":"{tr}del_t 123456\n{tr}del_t 123456 78806"})
+async def delete_torrent(message: Message):
+    endpoint = "/magnet/delete"
+    if not ( id := message.filtered_input_str ) :
+        return await message.reply("Enter an ID to delete")
+    for i in id.split():
+        json = await get_json(endpoint=endpoint, query={ "id": i })
+        await message.reply(str(json), quote=True)
