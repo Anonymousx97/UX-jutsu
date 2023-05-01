@@ -7,6 +7,7 @@
 # Thanks @Lostb053  for writing help
 # plugin modified for USERGE-X by @Kakashi_HTK(TG)/@ashwinstr(GH)
 # before porting please ask to Kakashi
+# Maintained by Ryuk
 
 import asyncio
 import os
@@ -28,15 +29,18 @@ async def _init() -> None:
     f_t = await SAVED_SETTINGS.find_one({"_id": "FBAN_TAG"})
     if f_t:
         Config.FBAN_TAG = f_t["data"]
+    found = await SAVED_SETTINGS.find_one({"_id": "F_ADEL"})
+    if found:
+        Config.F_ADEL = found["switch"]
+    else:
+        Config.F_ADEL = False
 
 
 @userge.on_cmd(
     "fban_tag",
     about={
         "header": "enable / disable fbanner's tag",
-        "flags": {
-            "-c": "check",
-        },
+        "flags": {"-c": "check"},
         "usage": "{tr}fban_tag",
     },
 )
@@ -60,21 +64,11 @@ async def fban_sudo_tags(message: Message):
     )
 
 
-async def _init() -> None:
-    found = await SAVED_SETTINGS.find_one({"_id": "F_ADEL"})
-    if found:
-        Config.F_ADEL = found["switch"]
-    else:
-        Config.F_ADEL = False
-
-
 @userge.on_cmd(
     "f_adel",
     about={
         "header": "toggle auto delete Fban confirmation",
-        "flags": {
-            "-c": "check",
-        },
+        "flags": {"-c": "check"},
         "usage": "{tr}f_adel",
     },
 )
@@ -104,38 +98,26 @@ async def f_adel(message: Message):
         "header": "Add a chat to fed list",
         "description": "Add a chat to fed list where message is to be sent",
         "usage": "{tr}addf",
+        "flags": {"-fp": "forward proof to fed"},
     },
     allow_bots=False,
     allow_channels=False,
 )
 async def addfed_(message: Message):
     """Adds current chat to connected Feds."""
-    chat_id = message.chat.id
-    chat_t = await userge.get_chat(chat_id)
-    chat_type = chat_t.type
-    name = message.input_str or chat_t.title or chat_t.first_name
-    if chat_type == "private":
-        found = await FED_LIST.find_one({"schat_id": chat_id})
-        if found:
-            await message.edit(
-                f"Chat __ID__: `{chat_id}`\nFed: **{found['sfed_name']}**\n\nAlready exists in Fed List !",
-                del_in=7,
-            )
-            return
-        await FED_LIST.insert_one(
-            {"sfed_name": name, "schat_id": chat_id, "chat_type": chat_type}
+    chat = message.chat
+    chat_id = chat.id
+    name = message.filtered_input_str or chat.title or chat.first_name
+    found = await FED_LIST.find_one({"chat_id": chat_id})
+    fp = "-fp" in message.flags
+    if found:
+        return await message.edit(
+            f"Chat __ID__: `{chat_id}`\nFed: **{found['fed_name']}**\n\nAlready exists in Fed List !",
+            del_in=7,
         )
-    else:
-        found = await FED_LIST.find_one({"chat_id": chat_id})
-        if found:
-            await message.edit(
-                f"Chat __ID__: `{chat_id}`\nFed: **{found['fed_name']}**\n\nAlready exists in Fed List !",
-                del_in=7,
-            )
-            return
-        await FED_LIST.insert_one(
-            {"fed_name": name, "chat_id": chat_id, "chat_type": chat_type}
-        )
+    await FED_LIST.insert_one(
+        {"fed_name": name, "chat_id": chat_id, "chat_type": chat.type, "fp": fp}
+    )
     msg_ = f"__ID__ `{chat_id}` added to Fed: **{name}**"
     await message.edit(msg_, del_in=7)
     await CHANNEL.log(msg_)
@@ -161,35 +143,23 @@ async def delfed_(message: Message):
     else:
         try:
             chat_ = await message.client.get_chat(message.input_str or message.chat.id)
-            chat_t = chat_.type
+            chat_.type
             chat_id = chat_.id
-            chat_.title
         except (PeerIdInvalid, IndexError):
             chat_id = message.input_str
             id_ = chat_id.replace("-", "")
             if not id_.isdigit() or not chat_id.startswith("-"):
                 return await message.err("Provide a valid chat ID...", del_in=7)
         out = f"Chat ID: {chat_id}\n"
-        if chat_t == "private":
-            found = await FED_LIST.find_one({"schat_id": int(chat_id)})
-            if found:
-                msg_ = out + f"Successfully Removed Fed: **{found['sfed_name']}**"
-                await message.edit(msg_, del_in=7)
-                await FED_LIST.delete_one(found)
-            else:
-                return await message.err(
-                    out + "**Does't exist in your Fed List !**", del_in=7
-                )
+        found = await FED_LIST.find_one({"chat_id": int(chat_id)})
+        if found:
+            msg_ = out + f"Successfully Removed Fed: **{found['fed_name']}**"
+            await message.edit(msg_, del_in=7)
+            await FED_LIST.delete_one(found)
         else:
-            found = await FED_LIST.find_one({"chat_id": int(chat_id)})
-            if found:
-                msg_ = out + f"Successfully Removed Fed: **{found['fed_name']}**"
-                await message.edit(msg_, del_in=7)
-                await FED_LIST.delete_one(found)
-            else:
-                return await message.err(
-                    out + "**Does't exist in your Fed List !**", del_in=7
-                )
+            return await message.err(
+                out + "**Does't exist in your Fed List !**", del_in=7
+            )
     await CHANNEL.log(msg_)
 
 
@@ -198,9 +168,7 @@ async def delfed_(message: Message):
     about={
         "header": "Fban user",
         "description": "Fban the user from the list of fed",
-        "flags": {
-            "-d": "auto-delete message",
-        },
+        "flags": {"-d": "auto-delete message"},
         "usage": "{tr}fban [username|reply to user|user_id] [reason (optional)]",
     },
     allow_bots=False,
@@ -212,6 +180,7 @@ async def fban_(message: Message):
     PROOF_CHANNEL = FBAN_LOG_CHANNEL if FBAN_LOG_CHANNEL else Config.LOG_CHANNEL_ID
     input = message.filtered_input_str
     await message.edit(fban_arg[0])
+    initialised_in_chat = message.chat.title or message.chat.first_name
     sudo_ = False
     if (
         message.from_user.id in Config.SUDO_USERS
@@ -292,14 +261,9 @@ async def fban_(message: Message):
     reason = reason or "Not specified."
     await message.edit(fban_arg[1])
     async for data in FED_LIST.find():
-        is_chat = True
-        try:
-            chat_id = int(data["chat_id"])
-        except KeyError:
-            chat_id = int(data["schat_id"])
-            is_chat = False
+        chat_id = int(data["chat_id"])
 
-        if is_chat:
+        if data["chat_type"] != "private":
             total += 1
             try:
                 await userge.send_message(
@@ -363,8 +327,9 @@ async def fban_(message: Message):
         fban_arg[3].format(u_link)
         + f"\n**ID:** <code>{u_id}</code>\n**Reason:** {reason}\n**Status:** {status}\n"
     )
+    msg_ += f"**Ban Initialised in**: __{initialised_in_chat}__"
     if sudo_:
-        msg_ += f"**By:** {message.from_user.mention}"
+        msg_ += f"\n**By:** {message.from_user.mention}"
     del_ = 3 if "-d" in message.flags or Config.F_ADEL else -1
     await message.edit(msg_, del_in=del_)
     await userge.send_message(int(PROOF_CHANNEL), msg_)
@@ -409,6 +374,7 @@ async def fban_p(message: Message):
             f"`The FBAN_LOG_CHANNEL ID provided ('{FBAN_LOG_CHANNEL}') is invalid, enter correct one.`",
             del_in=5,
         )
+    initialised_in_chat = message.chat.title or message.chat.first_name
     if channel_.username is None or channel_.type != "channel":
         await message.edit(
             "Proof channel should be a <b>channel</b> and should be <b>public</b> for this command to work...",
@@ -515,33 +481,22 @@ async def fban_p(message: Message):
     total = 0
     await message.edit(fban_arg[1])
     log_fwd = await userge.forward_messages(
-        int(FBAN_LOG_CHANNEL),
-        from_chat_id=chat_id,
-        message_ids=proof,
+        int(FBAN_LOG_CHANNEL), from_chat_id=chat_id, message_ids=proof
     )
     reason = reason or "Not specified"
-    reason += " || {" + f"{log_fwd.link}" + "}"
+    reason += " || {" + log_fwd.link + "}"
     if fps:
-        report_user(
-            chat=chat_id,
-            user_id=user,
-            msg=msg_en,
-            msg_id=proof,
-            reason=reason,
-        )
+        report_user(chat=chat_id, user_id=user, msg=msg_en, msg_id=proof, reason=reason)
         reported = "</b> and <b>reported "
     else:
         reported = ""
     async for data in FED_LIST.find():
-        is_chat = True
-        try:
-            chat_id = int(data["chat_id"])
-        except KeyError:
-            chat_id = int(data["schat_id"])
-            is_chat = False
-        if is_chat:
+        chat_id = int(data["chat_id"])
+        if data["chat_type"] != "private":
             total += 1
             try:
+                if data.get("fp"):
+                    await log_fwd.forward(chat_id)
                 await userge.send_message(
                     chat_id,
                     f"/fban <a href='tg://user?id={user}'>{user}</a> {reason}",
@@ -604,8 +559,9 @@ async def fban_p(message: Message):
         fban_arg[3].format(reported, u_link)
         + f"\n**ID:** <code>{u_id}</code>\n**Reason:** {reason}\n**Status:** {status}\n"
     )
+    msg_ += f"**Ban Initialised in**: __{initialised_in_chat}__"
     if sudo_:
-        msg_ += f"**By:** {message.from_user.mention}"
+        msg_ += f"\n**By:** {message.from_user.mention}"
     del_ = 3 if "-d" in message.flags or Config.F_ADEL else -1
     await message.edit(msg_, del_in=del_, disable_web_page_preview=True)
     await userge.send_message(
@@ -723,13 +679,8 @@ async def unfban_(message: Message):
     total = 0
     await message.edit(fban_arg[1])
     async for data in FED_LIST.find():
-        is_chat = True
-        try:
-            chat_id = int(data["chat_id"])
-        except KeyError:
-            chat_id = int(data["schat_id"])
-            is_chat = False
-        if is_chat:
+        chat_id = int(data["chat_id"])
+        if data["chat_type"] != "private":
             total += 1
             try:
                 async with userge.conversation(chat_id, timeout=8) as conv:
@@ -787,32 +738,31 @@ async def unfban_(message: Message):
     about={
         "header": "Fed Chat List",
         "description": "Get a list of chats added in fed",
-        "flags": {
-            "-id": "Show fed group id in list.",
-        },
+        "flags": {"-id": "Show fed group id in list."},
         "usage": "{tr}listf",
     },
 )
 async def fban_lst_(message: Message):
     """List all connected Feds."""
-    out = ""
+    normal_feds = "__• Normal Feds__ :\n"
+    sudo_feds = "\n• __Sudo Fed__ :\n"
+    proofed_feds = "\n__• Proof Logged in Feds__ :\n"
     total = 0
     async for data in FED_LIST.find():
-        is_chat = True
-        try:
-            chat_id = int(data["chat_id"])
-        except KeyError:
-            chat_id = int(data["schat_id"])
-            is_chat = False
-        if is_chat:
+        chat_id = int(data["chat_id"])
+        id_ = f"'<code>{chat_id}</code>' - " if "-id" in message.flags else ""
+        if data["chat_type"] != "private":
+            if fp := data.get("fp"):
+                proofed_feds += f"    {id_}<b>{data['fed_name']}</b>\n"
+            else:
+                normal_feds += f"    {id_}<b>{data['fed_name']}</b>\n"
             total += 1
-            id_ = f"'<code>{chat_id}</code>' - " if "-id" in message.flags else ""
-            out += f"• Fed: {id_}<b>{data['fed_name']}</b>\n"
         else:
-            out += f"\n• SUDO FED : <b>{data['sfed_name']}</b>\n"
+            sudo_feds += f"    <b>{data['fed_name']}</b>\n"
+    out = normal_feds + proofed_feds + sudo_feds
     await message.edit_or_send_as_file(
         f"**Connected federations: [{total}]**\n\n" + out
-        if out
+        if total
         else "**You haven't connected to any federations yet!**",
         caption="Connected Fed List",
     )
