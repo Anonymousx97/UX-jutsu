@@ -17,7 +17,8 @@ hachoir>=3.1.1
 heroku3>=4.2.3
 html-telegraph-poster>=0.2.31
 lyricsgenius
-motor>=2.3.0
+motor==3.2.0
+pymongo==4.4.0
 music_tag>=0.4.3
 numpy>=1.23.2
 oauth2client>=4.1.3
