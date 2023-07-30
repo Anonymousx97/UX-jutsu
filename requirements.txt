@@ -53,10 +53,6 @@ ujson>=4.0.1
 youtube-search-python==1.5.1
 feedparser>=6.0.2
 
-# Server
-fastapi>=0.88.0
-uvicorn>=0.20.0
-
 ### xtra reqs ###
 cairosvg>=2.5.2
 deezloader>=2022.3.5
